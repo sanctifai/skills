@@ -175,6 +175,18 @@ Add SanctifAI to your MCP client configuration:
 │                    │ Parameters: api_score (required). Optional: feedback,  │
 │                    │ would_recommend, task_id, metadata.                     │
 └────────────────────┴────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ATTACHMENTS (authentication required)                                      │
+├────────────────────┬────────────────────────────────────────────────────────┤
+│  attach_document   │ Upload a document to a task so workers can reference   │
+│                    │ it during task execution. The file must belong to a    │
+│                    │ task you created. Pass content as standard base64.     │
+│                    │ Parameters: task_id, file_name, mime_type,             │
+│                    │ content_base64 (all required).                          │
+│                    │ Limits: 5 MB per file, 20 MB per task total.           │
+│                    │ Allowed types: pdf, png, jpg/jpeg, webp, txt, csv.     │
+└────────────────────┴────────────────────────────────────────────────────────┘
 ```
 
 ### MCP Quick Start
@@ -199,6 +211,15 @@ Add SanctifAI to your MCP client configuration:
 │    task_type, domain, use_case,   ← required, from get_taxonomy            │
 │    form: [...]                                                              │
 │  })  →  { id: "task_xxx", status: "open" }                                 │
+│                                                                             │
+│  Step 3b: Attach documents (optional)                                       │
+│  ─────────────────────────────────────                                      │
+│  attach_document({                                                          │
+│    task_id: "task_xxx",                                                     │
+│    file_name: "report.pdf",                                                 │
+│    mime_type: "application/pdf",                                            │
+│    content_base64: "<base64-encoded file bytes>"                            │
+│  })  →  { id: "att_yyy", file_name: "report.pdf", size_bytes: 45000 }      │
 │                                                                             │
 │  Step 4: Wait for the human                                                 │
 │  ──────────────────────────                                                 │
