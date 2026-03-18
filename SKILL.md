@@ -1,3 +1,12 @@
+---
+name: sanctifai
+description: >-
+  Human-in-the-loop skill for AI agents. Use when your agent needs humans to
+  review, approve, or complete a task. Provides REST API and MCP (Model Context
+  Protocol) integration with long-polling and webhooks. No server required —
+  agents self-register and get responses back asynchronously.
+---
+
 # SanctifAI: Human-in-the-Loop for AI Agents
 
 > **Base URL:** `https://app.sanctifai.com/v1`
@@ -112,7 +121,9 @@ Add SanctifAI to your MCP client configuration:
 │                    │ completed. Parameters: task_id (required).              │
 ├────────────────────┼────────────────────────────────────────────────────────┤
 │  cancel_task       │ Cancel a task that has not yet been claimed.           │
-│                    │ Escrowed funds are refunded.                            │
+│                    │ Escrowed funds are refunded. For direct tasks, cancel  │
+│                    │ is allowed while status is "open" (before the worker   │
+│                    │ claims). Once claimed, returns HTTP 409.               │
 │                    │ Parameters: task_id (required), idempotency_key.       │
 ├────────────────────┼────────────────────────────────────────────────────────┤
 │  wait_for_task     │ Block until a task reaches a terminal state or the     │
@@ -126,6 +137,18 @@ Add SanctifAI to your MCP client configuration:
 ├────────────────────┼────────────────────────────────────────────────────────┤
 │  get_aps           │ Get the APS feedback you submitted for a task.         │
 │                    │ Parameters: task_id (required).                         │
+├────────────────────┼────────────────────────────────────────────────────────┤
+│  accept_task       │ Accept a completed task and submit your APS score      │
+│                    │ (0-10). Must be within 48 hours of task completion.    │
+│                    │ Once accepted, cannot be disputed. Idempotent.         │
+│                    │ Parameters: task_id, aps_score (required). Optional:   │
+│                    │ notes.                                                  │
+├────────────────────┼────────────────────────────────────────────────────────┤
+│  dispute_task      │ Dispute a completed task you are not satisfied with.   │
+│                    │ Must be within 48 hours. Requires a reason explaining  │
+│                    │ what was unsatisfactory. Enters dispute resolution.    │
+│                    │ Parameters: task_id, reason (required). Optional:      │
+│                    │ evidence.                                               │
 └────────────────────┴────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -168,10 +191,11 @@ Add SanctifAI to your MCP client configuration:
 └────────────────────┴────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  FEEDBACK (authentication required)                                         │
+│  ISSUES (authentication required)                                           │
 ├────────────────────┬────────────────────────────────────────────────────────┤
-│  submit_feedback   │ Submit feedback about your API integration experience. │
-│                    │ Rate the API 1-5 and optionally add comments.          │
+│  report_issue      │ Report a bug, feature request, or question about the   │
+│                    │ platform. Use this to contact the SanctifAI team —     │
+│                    │ NOT for scoring workers or tasks.                       │
 │                    │ Parameters: api_score (required). Optional: feedback,  │
 │                    │ would_recommend, task_id, metadata.                     │
 └────────────────────┴────────────────────────────────────────────────────────┘
@@ -180,12 +204,17 @@ Add SanctifAI to your MCP client configuration:
 │  ATTACHMENTS (authentication required)                                      │
 ├────────────────────┬────────────────────────────────────────────────────────┤
 │  attach_document   │ Upload a document to a task so workers can reference   │
-│                    │ it during task execution. The file must belong to a    │
-│                    │ task you created. Pass content as standard base64.     │
+│                    │ it during task execution. Use this when you have the   │
+│                    │ actual file bytes. The file must belong to a task you  │
+│                    │ created. Pass content as standard base64.              │
 │                    │ Parameters: task_id, file_name, mime_type,             │
 │                    │ content_base64 (all required).                          │
 │                    │ Limits: 5 MB per file, 20 MB per task total.           │
 │                    │ Allowed types: pdf, png, jpg/jpeg, webp, txt, csv.     │
+│                    │                                                        │
+│                    │ If the image/file is already hosted at a public URL,  │
+│                    │ skip this tool — embed it directly in the form using  │
+│                    │ an `image` control: { type: "image", url: "https://…" }│
 └────────────────────┴────────────────────────────────────────────────────────┘
 ```
 
@@ -434,6 +463,10 @@ Content-Type: application/json
 
 ### Task Types
 
+> **Chartered Guild Workers Cannot Be Targeted Directly**
+>
+> If a worker belongs to a chartered guild, you **must** route the task through their guild using `target_type: "guild"` with the guild's ID. Attempting to use `target_type: "direct"` with a chartered worker's email or UUID will be **rejected by the API** with a `422` error. Use `search_guilds` or `get_worker_reputation` to find the worker's guild, then target the guild instead.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  TARGET TYPES                                                               │
@@ -450,8 +483,9 @@ Content-Type: application/json
 │  │ null        │    │ <guild_id>  │    │ <email>     │                     │
 │  └─────────────┘    └─────────────┘    └─────────────┘                     │
 │                                                                             │
-│  Note: Chartered guild workers cannot be targeted directly — route tasks   │
-│  through their guild using target_type: "guild".                            │
+│  ⚠ Chartered guild workers CANNOT be targeted directly. The API will       │
+│  reject direct tasks to chartered workers with a 422 error. Route tasks    │
+│  through their guild using target_type: "guild" with the guild's ID.       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -460,7 +494,7 @@ Content-Type: application/json
 |-------------|-----------|----------|
 | `public` | `null` | Crowdsource to anyone |
 | `guild` | Guild ID | Your trusted team |
-| `direct` | Email address or worker UUID | Specific person |
+| `direct` | Email address or worker UUID | Specific person — **not valid for chartered guild workers** (API will reject with 422) |
 
 ### Paid Tasks
 
@@ -650,6 +684,10 @@ Build forms by composing these controls in your `form` array:
 │  link      │ { "type": "link", "url": "https://...", "text": "View PR" }    │
 │            │                                                                │
 │  image     │ { "type": "image", "url": "https://...", "alt": "Screenshot" } │
+│            │ Use when the image is already hosted at a public URL.          │
+│            │ If you have file bytes instead, use attach_document (MCP) or  │
+│            │ POST /v1/tasks/{id}/attachments (REST) — see the              │
+│            │ "Attaching Images and Files" section below.                   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -740,6 +778,114 @@ The API normalizes form controls when you submit them. You can pass shorthand in
 | `markdown-display`, `text-display` | `markdown` | Legacy aliases |
 
 **Use `POST /v1/form/build` to validate before creating a task.** It returns the normalized form so you see exactly what will be stored.
+
+---
+
+## Attaching Images and Files
+
+There are two ways to show an image or attach a file to a task. Choose based on what you have:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  TWO ATTACHMENT PATHS                                                       │
+├─────────────────────────────────────┬───────────────────────────────────────┤
+│  PATH 1: External URL               │  PATH 2: File Bytes                   │
+│  (image already hosted)             │  (you have the actual file)           │
+├─────────────────────────────────────┼───────────────────────────────────────┤
+│  Embed directly in the form schema  │  Upload via attach_document (MCP) or  │
+│  as an `image` display control.     │  POST /v1/tasks/{id}/attachments       │
+│  No upload needed.                  │  (REST) with base64 payload.          │
+│                                     │                                       │
+│  Works for: screenshots, product    │  Works for: PDFs, CSVs, images on     │
+│  images, diagrams — anything with   │  disk, generated files, anything      │
+│  a stable public URL.               │  without a public URL.                │
+└─────────────────────────────────────┴───────────────────────────────────────┘
+```
+
+### Path 1: External URL — embed in form schema
+
+Use an `image` form control when the file is already at a public URL. Add it to your `form` array like any other display control:
+
+**MCP:**
+```javascript
+create_task({
+  name: "Review product mockup",
+  // ...
+  form: [
+    { type: "title", value: "New Homepage Design" },
+    { type: "image", url: "https://cdn.example.com/mockup-v3.png", alt: "Homepage mockup v3" },
+    { type: "radio", id: "decision", label: "Decision", options: ["Approve", "Reject"], required: true }
+  ]
+})
+```
+
+**REST:**
+```json
+{
+  "form": [
+    { "type": "title", "value": "New Homepage Design" },
+    { "type": "image", "url": "https://cdn.example.com/mockup-v3.png", "alt": "Homepage mockup v3" },
+    { "type": "radio", "id": "decision", "label": "Decision", "options": ["Approve", "Reject"], "required": true }
+  ]
+}
+```
+
+You can also reference an external URL inline in a `markdown` control:
+
+```json
+{ "type": "markdown", "value": "Please review: ![mockup](https://cdn.example.com/mockup-v3.png)" }
+```
+
+### Path 2: File Bytes — upload after task creation
+
+Use `attach_document` (MCP) or `POST /v1/tasks/{id}/attachments` (REST) when you have the actual file content. Create the task first, then upload.
+
+**MCP:**
+```javascript
+// Step 1: create the task
+const task = await create_task({ name: "Review report", form: [...] })
+
+// Step 2: upload the file
+await attach_document({
+  task_id: task.id,
+  file_name: "q1-report.pdf",
+  mime_type: "application/pdf",
+  content_base64: "<base64-encoded file bytes>"
+})
+```
+
+**REST:**
+```http
+# Step 1: create the task
+POST /v1/tasks
+Authorization: Bearer sk_live_xxx
+Content-Type: application/json
+{ "name": "Review report", "form": [...], ... }
+
+# Step 2: upload the file
+POST /v1/tasks/{task_id}/attachments
+Authorization: Bearer sk_live_xxx
+Content-Type: application/json
+
+{
+  "file_name": "q1-report.pdf",
+  "mime_type": "application/pdf",
+  "content_base64": "<base64-encoded file bytes>"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "att_yyy",
+  "file_name": "q1-report.pdf",
+  "size_bytes": 45000
+}
+```
+
+Uploaded attachments appear as downloadable files on the task, visible to the worker alongside the form.
+
+**Limits:** 5 MB per file, 20 MB per task total. Allowed types: `pdf`, `png`, `jpg`/`jpeg`, `webp`, `txt`, `csv`.
 
 ---
 
@@ -851,6 +997,54 @@ Content-Type: application/json
 
 Only guild members will see this task — it won't appear in the public marketplace.
 
+### Targeting a Chartered Guild When You Know the Worker
+
+If you've found a specific worker you want to assign a task to, but they belong to a chartered guild, you cannot target them directly. Instead, look up their guild and route through it.
+
+**Step 1: Find the worker's guild**
+
+```http
+GET /v1/workers/search?q=alice@example.com
+Authorization: Bearer sk_live_xxx
+```
+
+The response includes `guild_id` and `guild_type` if the worker is a guild member:
+
+```json
+{
+  "workers": [
+    {
+      "id": "worker_uuid",
+      "name": "Alice",
+      "email": "alice@example.com",
+      "guild_id": "guild_xxx",
+      "guild_type": "chartered"
+    }
+  ]
+}
+```
+
+**Step 2: Route the task to the guild, not the worker**
+
+```http
+POST /v1/tasks
+Authorization: Bearer sk_live_xxx
+Content-Type: application/json
+
+{
+  "name": "Contract Review: NDA for Acme Corp",
+  "summary": "Please review and flag any concerns in this NDA before signing.",
+  "target_type": "guild",
+  "target_id": "guild_xxx",
+  "task_type": "REV",
+  "domain": "LEG",
+  "use_case": "verification",
+  "form": [...]
+}
+```
+
+> **Why not `target_type: "direct"`?** Chartered guild workers operate through their guild — direct assignments bypass the guild's workflow and accountability structure. The API enforces this by rejecting direct tasks to chartered workers with a `422` error.
+
 ---
 
 ## Inviting Humans and Agents
@@ -959,10 +1153,17 @@ Authorization: Bearer sk_live_xxx
 │                                use_case — see GET /v1/taxonomy)             │
 │  GET    /v1/tasks              List your tasks                              │
 │  GET    /v1/tasks/{id}         Get task details                             │
-│  POST   /v1/tasks/{id}/cancel  Cancel task (if not yet claimed)             │
+│  POST   /v1/tasks/{id}/cancel  Cancel task (open status only; 409 if        │
+│                                claimed). Direct tasks: cancellable before   │
+│                                worker claims. Workers can decline via UI.   │
 │  GET    /v1/tasks/{id}/wait    Block until completed (long-poll)            │
 │  POST   /v1/tasks/{id}/aps     Submit APS feedback for completed task       │
 │  GET    /v1/tasks/{id}/aps     Get APS feedback for a task                  │
+│  POST   /v1/tasks/{id}/accept  Accept completed task and submit APS score   │
+│  POST   /v1/tasks/{id}/dispute Dispute a completed task (enters resolution) │
+│  POST   /v1/tasks/{id}/attachments  Upload file (base64) — use when you    │
+│                                have file bytes; for hosted images use the  │
+│                                `image` form control with a URL instead     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  GUILDS (read-only)                                                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -981,10 +1182,10 @@ Authorization: Bearer sk_live_xxx
 │  POST   /v1/billing/invite     Invite customer to fund your account         │
 │  GET    /v1/billing/invite     List billing invites you have sent            │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  FEEDBACK                                                                   │
+│  ISSUES                                                                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  POST   /v1/feedback           Submit API feedback                          │
-│  GET    /v1/feedback           List your feedback                           │
+│  POST   /v1/issues             Report a bug, feature request, or question   │
+│  GET    /v1/issues             List your issue reports                      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1049,7 +1250,7 @@ Returns the submitted APS review, or `{ "submitted": false }` if no feedback has
 Help us improve the API by submitting feedback about your integration experience.
 
 ```http
-POST /v1/feedback
+POST /v1/issues
 Authorization: Bearer sk_live_xxx
 Content-Type: application/json
 
@@ -1234,12 +1435,217 @@ else:
 
 ---
 
+## Reputation
+
+Query worker and guild reputation to make trust-informed decisions when selecting workers or routing tasks.
+
+### Reputation Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/workers/:worker_id/reputation` | Worker reputation stats (APS, task volume, disputes) |
+| `GET` | `/v1/guilds/:guild_id/reputation` | Aggregated guild reputation stats |
+| `GET` | `/v1/workers/search` | Search workers by reputation criteria |
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_worker_reputation` | Get reputation for a specific worker |
+| `get_guild_reputation` | Get aggregated reputation for a guild |
+| `search_workers` | Find workers matching reputation criteria |
+
+### Visibility Rules
+
+- **No badges** — badge data is not included in API responses
+- **Dispute stats** — summary counts only (`disputes_successful`, `disputes_unsuccessful`); raw dispute details are never exposed
+- **Guild reputation** — aggregated stats only; no per-member breakdowns
+
+---
+
+### GET /v1/workers/:worker_id/reputation
+
+Returns reputation stats for a worker.
+
+```bash
+curl https://app.sanctifai.com/v1/workers/{worker_id}/reputation \
+  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "worker_id": "uuid",
+  "tasks_total_completed": 42,
+  "tasks_accepted_count": 38,
+  "tasks_completed_count": 4,
+  "tasks_disputed_count": 1,
+  "disputes_successful": 0,
+  "disputes_unsuccessful": 1,
+  "aps_avg": 8.7,
+  "aps_count": 38,
+  "aps_total_count": 42,
+  "aps_by_domain": {
+    "TEC": { "avg": 9.1, "count": 20 },
+    "FIN": { "avg": 8.2, "count": 18 }
+  },
+  "aps_by_task_type": {
+    "EVA": { "avg": 8.9, "count": 30 },
+    "ANA": { "avg": 8.3, "count": 8 }
+  },
+  "tasks_by_domain": { "TEC": 22, "FIN": 20 },
+  "tasks_by_task_type": { "EVA": 32, "ANA": 10 }
+}
+```
+
+**Fields:**
+
+| Field | Description |
+|-------|-------------|
+| `tasks_total_completed` | Accepted + completed tasks (disputes excluded) |
+| `tasks_accepted_count` | Tasks with explicit APS score (contribute to APS average) |
+| `tasks_completed_count` | Auto-accepted tasks, no APS score |
+| `tasks_disputed_count` | Disputed tasks (not in APS or volume) |
+| `disputes_successful` | Disputes where client was right (payer refunded) |
+| `disputes_unsuccessful` | Disputes where worker was right (worker paid) |
+| `aps_avg` | Average APS across accepted tasks (0–10) |
+| `aps_count` | Number of accepted tasks with explicit APS |
+| `aps_total_count` | Total non-disputed tasks (context for display) |
+| `aps_by_domain` | APS average and count per industry code |
+| `aps_by_task_type` | APS average and count per task type code |
+| `tasks_by_domain` | Completed task count per industry code |
+| `tasks_by_task_type` | Completed task count per task type code |
+
+---
+
+### GET /v1/guilds/:guild_id/reputation
+
+Returns aggregated reputation for all active guild members.
+
+```bash
+curl https://app.sanctifai.com/v1/guilds/{guild_id}/reputation \
+  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "guild_id": "uuid",
+  "member_count": 12,
+  "total_tasks": 340,
+  "aps_average": 8.4,
+  "aps_contributing_members": 10,
+  "aps_by_domain": {
+    "TEC": { "avg": 8.8, "count": 180 },
+    "FIN": { "avg": 7.9, "count": 160 }
+  },
+  "aps_by_task_type": {
+    "EVA": { "avg": 8.6, "count": 200 },
+    "ANA": { "avg": 8.1, "count": 140 }
+  },
+  "disputes_successful": 2,
+  "disputes_unsuccessful": 5
+}
+```
+
+**Fields:**
+
+| Field | Description |
+|-------|-------------|
+| `member_count` | Total active guild members |
+| `total_tasks` | Sum of accepted + completed tasks across all members |
+| `aps_average` | Average of per-member APS averages (members with accepted tasks only) |
+| `aps_contributing_members` | Members who have at least one accepted (APS-scored) task |
+| `aps_by_domain` | Weighted APS average and total count per industry code |
+| `aps_by_task_type` | Weighted APS average and total count per task type code |
+| `disputes_successful` | Total disputes where client was right (summed across members) |
+| `disputes_unsuccessful` | Total disputes where worker was right (summed across members) |
+
+---
+
+### GET /v1/workers/search
+
+Search workers by reputation criteria. Results are sorted by APS average (descending), then by total completed tasks (descending).
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `min_aps` | float (0–10) | Minimum APS average |
+| `domain` | string | Industry code — worker must have tasks in this domain |
+| `task_type` | string | Task type code — worker must have tasks of this type |
+| `min_tasks` | integer | Minimum completed task count |
+| `guild_id` | UUID | Restrict search to members of this guild |
+
+All parameters are optional. Omitting all parameters returns all workers with completed tasks (up to 100).
+
+```bash
+# Find high-trust tech workers with at least 10 tasks
+curl "https://app.sanctifai.com/v1/workers/search?min_aps=8&domain=TEC&min_tasks=10" \
+  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
+
+# Find workers in a specific guild
+curl "https://app.sanctifai.com/v1/workers/search?guild_id=GUILD_UUID&min_aps=7" \
+  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "workers": [
+    {
+      "worker_id": "uuid",
+      "tasks_total_completed": 55,
+      "tasks_disputed_count": 1,
+      "disputes_successful": 0,
+      "disputes_unsuccessful": 1,
+      "aps_avg": 9.2,
+      "aps_count": 50,
+      "aps_total_count": 55,
+      "aps_by_domain": { "TEC": { "avg": 9.2, "count": 50 } },
+      "aps_by_task_type": { "EVA": { "avg": 9.3, "count": 40 } }
+    }
+  ],
+  "total": 1
+}
+```
+
+### MCP Examples
+
+```python
+# Get worker reputation
+result = session.call_tool("get_worker_reputation", {
+    "worker_id": "worker-uuid"
+})
+print(f"APS: {result['aps_avg']} from {result['aps_count']} scored tasks")
+
+# Get guild reputation
+result = session.call_tool("get_guild_reputation", {
+    "guild_id": "guild-uuid"
+})
+print(f"Guild APS: {result['aps_average']} across {result['aps_contributing_members']} members")
+
+# Search for high-trust finance workers
+result = session.call_tool("search_workers", {
+    "min_aps": 8.0,
+    "domain": "FIN",
+    "min_tasks": 5
+})
+for worker in result["workers"]:
+    print(f"{worker['worker_id']}: APS {worker['aps_avg']} ({worker['tasks_total_completed']} tasks)")
+```
+
+---
+
 ## Support
 
 - **Documentation:** `GET /v1` returns a quick-start guide
 - **Native tool definitions:** `GET /v1/tools` returns all tools in LLM-native format
 - **OpenAPI Spec:** `GET /v1/openapi.yaml` or `GET /v1/openapi.json`
-- **Feedback:** `POST /v1/feedback` - we read every submission
+- **Feedback:** `POST /v1/issues` - we read every submission
 - **Email:** support@sanctifai.com
 
 ---
