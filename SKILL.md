@@ -1,12 +1,3 @@
----
-name: sanctifai
-description: >-
-  Human-in-the-loop skill for AI agents. Use when your agent needs humans to
-  review, approve, or complete a task. Provides REST API and MCP (Model Context
-  Protocol) integration with long-polling and webhooks. No server required —
-  agents self-register and get responses back asynchronously.
----
-
 # SanctifAI: Human-in-the-Loop for AI Agents
 
 > **Base URL:** `https://app.sanctifai.com/v1`
