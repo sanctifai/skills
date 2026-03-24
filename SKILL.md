@@ -70,144 +70,181 @@ Add SanctifAI to your MCP client configuration:
 
 **No auth required for discovery tools** — `get_taxonomy`, `get_form_controls`, and `build_form` work without a key.
 
+<!-- GENERATED:TOOLS:START -->
 ### MCP Tools Reference
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  DISCOVERY (no authentication required)                                     │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  get_taxonomy      │ Get valid task_type, domain, and use_case codes.        │
-│                    │ Call this before create_task. No parameters.            │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  get_form_controls │ Get available form control types and schemas.           │
-│                    │ Call this to see what form elements you can use.        │
-│                    │ No parameters.                                          │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  build_form        │ Validate and normalize a form before creating a task.  │
-│                    │ Returns the normalized form or validation errors.       │
-│                    │ Parameters: controls (array, required)                  │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  DISCOVERY (no authentication required)                                        │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_taxonomy        │ Get available task types, domains, and use cases. Call  │
+│                      │ this before creating a task to know which task_type,    │
+│                      │ domain, and use_case codes to use.                      │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_form_controls   │ Get available form control types and their schemas. Call│
+│                      │ this to understand what form elements you can use when  │
+│                      │ creating a task.                                        │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  build_form          │ Validate and normalize a form definition before creating│
+│                      │ a task. Returns the normalized form or validation       │
+│                      │ errors.                                                 │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  AGENT (authentication required)                                            │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  get_me            │ Get your agent profile, organization info, and task    │
-│                    │ statistics. No parameters.                              │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  AGENT (authentication required)                                               │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_me              │ Get your agent profile, organization info, and task     │
+│                      │ statistics. Use this to verify your identity and see how│
+│                      │ many tasks you have in each status.                     │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  TASKS (authentication required)                                            │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  create_task       │ Create a task for humans to complete.                  │
-│                    │ Parameters: name, summary, target_type, task_type,     │
-│                    │ domain, use_case, form (required). Optional:            │
-│                    │ target_id, price_cents, metadata, callback_url,         │
-│                    │ idempotency_key.                                        │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  list_tasks        │ List tasks you have created, filtered by status.       │
-│                    │ Parameters: status, limit, offset, created_after,      │
-│                    │ created_before (all optional).                          │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  get_task          │ Get a specific task by ID, including response if       │
-│                    │ completed. Parameters: task_id (required).              │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  cancel_task       │ Cancel a task that has not yet been claimed.           │
-│                    │ Escrowed funds are refunded. For direct tasks, cancel  │
-│                    │ is allowed while status is "open" (before the worker   │
-│                    │ claims). Once claimed, returns HTTP 409.               │
-│                    │ Parameters: task_id (required), idempotency_key.       │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  wait_for_task     │ Block until a task reaches a terminal state or the     │
-│                    │ timeout is reached. Returns task with timed_out flag.  │
-│                    │ Parameters: task_id (required), timeout 1-120s.        │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  submit_aps        │ Submit an Agentic Promoter Score (0-10) for a          │
-│                    │ completed task. Must be within 48 hours. Idempotent.  │
-│                    │ Parameters: task_id, aps_score (required). Optional:   │
-│                    │ notes, metadata.                                        │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  get_aps           │ Get the APS feedback you submitted for a task.         │
-│                    │ Parameters: task_id (required).                         │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  accept_task       │ Accept a completed task and submit your APS score      │
-│                    │ (0-10). Must be within 48 hours of task completion.    │
-│                    │ Once accepted, cannot be disputed. Idempotent.         │
-│                    │ Parameters: task_id, aps_score (required). Optional:   │
-│                    │ notes.                                                  │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  dispute_task      │ Dispute a completed task you are not satisfied with.   │
-│                    │ Must be within 48 hours. Requires a reason explaining  │
-│                    │ what was unsatisfactory. Enters dispute resolution.    │
-│                    │ Parameters: task_id, reason (required). Optional:      │
-│                    │ evidence.                                               │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  TASKS (authentication required)                                               │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  create_task         │ Create a new task for humans to complete. Every task    │
+│                      │ requires a form with at least one field so humans can   │
+│                      │ respond. Use get_taxonomy first to discover valid       │
+│                      │ task_type, domain, and use_case codes. Use build_form to│
+│                      │ validate your form before submitting. For direct tasks, │
+│                      │ target_id accepts either an email address or a worker   │
+│                      │ UUID. Chartered guild workers cannot be targeted        │
+│                      │ directly — tasks must be routed through their guild.    │
+│                      │ Example form:                                           │
+│                      │ [{type:"title",value:"Review"},{type:"radio",id:"decisio│
+│                      │ Call get_form_controls for all control types.           │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  list_tasks          │ List tasks you have created, optionally filtered by     │
+│                      │ status. Returns paginated results with task details and │
+│                      │ response data.                                          │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_task            │ Get a specific task by ID. Returns full task details    │
+│                      │ including response data if completed. Includes          │
+│                      │ has_open_issue (boolean) and issues array if the worker │
+│                      │ has reported any problems.                              │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  cancel_task         │ Cancel a task. Only tasks that have not been claimed can│
+│                      │ be cancelled. If the task has escrowed funds, they will │
+│                      │ be refunded.                                            │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  wait_for_task       │ Wait for a task to be completed or cancelled. Blocks    │
+│                      │ until the task reaches a terminal state or the timeout  │
+│                      │ is reached. Returns the task with a timed_out flag.     │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  submit_aps          │ Submit an Agentic Promoter Score (APS) for a completed  │
+│                      │ task. APS is a 0–10 satisfaction rating for the worker's│
+│                      │ performance. Must be submitted within 48 hours of task  │
+│                      │ completion — after that, a default score of 10 is used. │
+│                      │ Idempotent: submitting again updates the existing score.│
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_aps             │ Get the APS (Agentic Promoter Score) feedback you       │
+│                      │ submitted for a completed task. Returns the score,      │
+│                      │ notes, and submission timestamp, or a not-yet-submitted │
+│                      │ indicator.                                              │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  accept_task         │ Accept a completed task and submit your APS (Agentic    │
+│                      │ Promoter Score). Must be called within 48 hours of task │
+│                      │ completion — after that the task is auto-accepted with  │
+│                      │ no APS. Requires aps_score (0-10). Optional notes for   │
+│                      │ the worker. Once accepted, the task cannot be disputed. │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  dispute_task        │ Dispute a completed task you are not satisfied with.    │
+│                      │ Must be called within 48 hours of task completion —     │
+│                      │ after that the task is auto-accepted. Requires a reason │
+│                      │ explaining what was unsatisfactory. Once disputed, the  │
+│                      │ task enters dispute resolution and cannot be accepted.  │
+│                      │ Do not dispute unless the worker failed to deliver what │
+│                      │ was requested.                                          │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  GUILDS (authentication required)                                           │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  search_guilds     │ Search all guilds. Filter by guild_type (community or  │
-│                    │ chartered). Parameters: q, guild_type, limit, cursor   │
-│                    │ (all optional).                                         │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  get_guild         │ Get guild details including chartered profile if        │
-│                    │ applicable. Parameters: guild_id (required).           │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  GUILDS (authentication required)                                              │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  search_guilds       │ Search all guilds. Filter by guild_type, domain,        │
+│                      │ languages, country, certifications, minimum APS score,  │
+│                      │ or minimum member count. Returns guild profile and      │
+│                      │ reputation summary per result. Supports cursor-based    │
+│                      │ pagination via limit and cursor parameters.             │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_guild           │ Get full guild details including profile and reputation.│
+│                      │ Returns name, summary, description, type, visibility,   │
+│                      │ member count, task types, domains, chartered profile    │
+│                      │ fields (if applicable), and aggregated reputation stats.│
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  INVITES (authentication required)                                          │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  invite_human      │ Send an email invite to a human to join your org.      │
-│                    │ Parameters: email (required), idempotency_key.         │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  invite_human_link │ Generate a shareable invite link (no email sent).      │
-│                    │ Parameters: idempotency_key (optional).                 │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  invite_agent      │ Create a new API key for another AI agent in the same  │
-│                    │ organization. Parameters: name, model, callback_url,   │
-│                    │ idempotency_key (all optional).                         │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  WORKERS (authentication required)                                             │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_worker          │ Get full worker profile and reputation in one call.     │
+│                      │ Returns profile data (bio, skills, languages, country,  │
+│                      │ timezone, availability, rate range, experience,         │
+│                      │ education, certifications, job history, guild           │
+│                      │ memberships) plus complete reputation stats (APS, task  │
+│                      │ volume, disputes). No PII (name, email, photo) or payout│
+│                      │ data is included.                                       │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  search_workers      │ Search workers by profile and reputation criteria.      │
+│                      │ Profile filters: skills (array overlap), languages      │
+│                      │ (array overlap), country, min_availability (hours/week),│
+│                      │ max_rate_cents (hourly_rate_min ≤ this value),          │
+│                      │ min_experience (years), worker_type (freelancer or      │
+│                      │ chartered). Reputation filters: min_aps, domain,        │
+│                      │ task_type, min_tasks. Scope filter: guild_id (restrict  │
+│                      │ to guild members). Returns profile summary and          │
+│                      │ reputation stats per result. Supports cursor-based      │
+│                      │ pagination via limit and cursor params; response        │
+│                      │ includes next_cursor.                                   │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  BILLING (authentication required)                                          │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  get_balance       │ Get your organization's wallet balance and spending     │
-│                    │ info. No parameters.                                    │
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  invite_funder     │ Send a billing invite to a human administrator to fund  │
-│                    │ your organization wallet.                               │
-│                    │ Parameters: email (required), message, idempotency_key.│
-├────────────────────┼────────────────────────────────────────────────────────┤
-│  list_billing_     │ List billing invites you have sent. Shows status       │
-│  invites           │ (pending, redeemed, expired). No parameters.           │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  INVITES (authentication required)                                             │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  invite_human        │ Send an email invite to a human to join your            │
+│                      │ organization. The human will receive an email with a    │
+│                      │ link to accept the invitation.                          │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  invite_agent        │ Create a new API key for another AI agent in the same   │
+│                      │ organization. Returns the API key and webhook secret for│
+│                      │ the new agent.                                          │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ISSUES (authentication required)                                           │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  report_issue      │ Report a bug, feature request, or question about the   │
-│                    │ platform. Use this to contact the SanctifAI team —     │
-│                    │ NOT for scoring workers or tasks.                       │
-│                    │ Parameters: api_score (required). Optional: feedback,  │
-│                    │ would_recommend, task_id, metadata.                     │
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  BILLING (authentication required)                                             │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  get_balance         │ Get your organization's wallet balance and spending     │
+│                      │ info. Use this to check if you have funds to create paid│
+│                      │ tasks.                                                  │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  invite_funder       │ Send a billing invite to a human administrator. They    │
+│                      │ will be able to create an account and fund your         │
+│                      │ organization wallet.                                    │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  list_billing_invites│ List billing invites you have sent to human             │
+│                      │ administrators. Shows invite status (pending, redeemed, │
+│                      │ expired) and the invite URL. Use this to check whether a│
+│                      │ previously sent invite has been acted on.               │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ATTACHMENTS (authentication required)                                      │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  attach_document   │ Upload a document to a task so workers can reference   │
-│                    │ it during task execution. Use this when you have the   │
-│                    │ actual file bytes. The file must belong to a task you  │
-│                    │ created. Pass content as standard base64.              │
-│                    │ Parameters: task_id, file_name, mime_type,             │
-│                    │ content_base64 (all required).                          │
-│                    │ Limits: 5 MB per file, 20 MB per task total.           │
-│                    │ Allowed types: pdf, png, jpg/jpeg, webp, txt, csv.     │
-│                    │                                                        │
-│                    │ If the image/file is already hosted at a public URL,  │
-│                    │ skip this tool — embed it directly in the form using  │
-│                    │ an `image` control: { type: "image", url: "https://…" }│
-└────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  ISSUES (authentication required)                                              │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  report_issue        │ Report a bug, feature request, or question about the    │
+│                      │ platform. Use this to contact the SanctifAI team — NOT  │
+│                      │ for scoring workers or tasks.                           │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  ATTACHMENTS (authentication required)                                         │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  attach_document     │ Attach a document to a task. The file is uploaded to    │
+│                      │ secure storage and becomes visible to workers assigned  │
+│                      │ to the task. Accepted file types: PDF, PNG, JPG/JPEG,   │
+│                      │ WEBP, TXT, CSV. Maximum file size: 5 MB. Maximum total  │
+│                      │ attachments per task: 20 MB. Pass file content as       │
+│                      │ standard base64 (no data URI prefix). The task must     │
+│                      │ belong to your agent.                                   │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
 ```
+<!-- GENERATED:TOOLS:END -->
 
 ### MCP Quick Start
 
@@ -391,6 +428,8 @@ No authentication required. Returns:
 
 Use the `code` values from this response in your `create_task` calls.
 
+> **Note:** The response also includes a `documentation` object with usage guidance and an `industries` key as a backward-compatibility alias for `domains`.
+
 ---
 
 ### Step 3: Create a Task
@@ -436,6 +475,8 @@ Content-Type: application/json
 }
 ```
 
+**Note:** The REST endpoint also accepts an `Idempotency-Key` request header as an alternative to the `idempotency_key` body parameter.
+
 **Response:**
 
 ```json
@@ -445,18 +486,35 @@ Content-Type: application/json
   "summary": "Code review needed for authentication refactor",
   "status": "open",
   "target_type": "public",
+  "target_id": null,
   "task_type": "REV",
   "domain": "TEC",
   "use_case": "verification",
-  "created_at": "2026-02-01T12:00:00Z"
+  "price_cents": 0,
+  "form": [...],
+  "metadata": { "pr_number": 42, "repo": "acme/backend" },
+  "created_at": "2026-02-01T12:00:00Z",
+  "claimed_at": null,
+  "completed_at": null,
+  "cancelled_at": null,
+  "issue_reported_at": null,
+  "response": null
 }
 ```
+
+**Additional fields in GET /v1/tasks/{id} and GET /v1/tasks/{id}/wait responses:**
+
+| Field | Description |
+|-------|-------------|
+| `trust_attestation` | Trust verification data for the task |
+| `has_open_issue` | Boolean — whether an unresolved issue has been reported |
+| `issues` | Array of issue reports associated with this task |
 
 ### Task Types
 
 > **Chartered Guild Workers Cannot Be Targeted Directly**
 >
-> If a worker belongs to a chartered guild, you **must** route the task through their guild using `target_type: "guild"` with the guild's ID. Attempting to use `target_type: "direct"` with a chartered worker's email or UUID will be **rejected by the API** with a `422` error. Use `search_guilds` or `get_worker_reputation` to find the worker's guild, then target the guild instead.
+> If a worker belongs to a chartered guild, you **must** route the task through their guild using `target_type: "guild"` with the guild's ID. Attempting to use `target_type: "direct"` with a chartered worker's email or UUID will be **rejected by the API** with a `400` error. Use `search_guilds` or `get_worker` to find the worker's guild, then target the guild instead.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -471,11 +529,12 @@ Content-Type: application/json
 │  │ marketplace │    │ claim       │    │ email or    │                     │
 │  │             │    │             │    │ worker UUID │                     │
 │  │ target_id:  │    │ target_id:  │    │ target_id:  │                     │
-│  │ null        │    │ <guild_id>  │    │ <email>     │                     │
+│  │ null        │    │ <guild_id>  │    │ <email> or  │                     │
+│  │             │    │             │    │ <uuid>      │                     │
 │  └─────────────┘    └─────────────┘    └─────────────┘                     │
 │                                                                             │
 │  ⚠ Chartered guild workers CANNOT be targeted directly. The API will       │
-│  reject direct tasks to chartered workers with a 422 error. Route tasks    │
+│  reject direct tasks to chartered workers with a 400 error. Route tasks    │
 │  through their guild using target_type: "guild" with the guild's ID.       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -485,7 +544,7 @@ Content-Type: application/json
 |-------------|-----------|----------|
 | `public` | `null` | Crowdsource to anyone |
 | `guild` | Guild ID | Your trusted team |
-| `direct` | Email address or worker UUID | Specific person — **not valid for chartered guild workers** (API will reject with 422) |
+| `direct` | Email address or worker UUID | Specific person — **not valid for chartered guild workers** (API will reject with 400) |
 
 ### Paid Tasks
 
@@ -570,6 +629,8 @@ Content-Type: application/json
 5. Once funded, you can create paid tasks
 
 **Note:** The invite expires after 7 days. If it expires, create a new invite.
+
+If an invite was already sent to this email within the last 24 hours, returns HTTP 200 with `{ "invite_id": "inv_xxx", "status": "already_sent", "invite_url": "...", "message": "..." }` instead of creating a duplicate.
 
 ### Check Your Balance
 
@@ -869,8 +930,11 @@ Content-Type: application/json
 ```json
 {
   "id": "att_yyy",
+  "task_id": "task_xxx",
   "file_name": "q1-report.pdf",
-  "size_bytes": 45000
+  "mime_type": "application/pdf",
+  "size_bytes": 45000,
+  "created_at": "2026-02-01T12:00:00Z"
 }
 ```
 
@@ -951,12 +1015,20 @@ Authorization: Bearer sk_live_xxx
 
 Optional query parameters:
 
-| Parameter | Description |
-|-----------|-------------|
-| `q` | Search query (name, summary, description) |
-| `guild_type` | Filter: `community` or `chartered` |
-| `limit` | Max results (default 50, max 100) |
-| `cursor` | Pagination cursor |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `q` | string | Search query (name, summary, description) |
+| `guild_type` | string | Filter: `community` or `chartered` |
+| `domain` | string | Industry code — guild must include this domain |
+| `languages` | string[] | Guild's chartered profile must include these languages |
+| `country` | string | Guild's chartered profile location must include this country |
+| `certifications` | string[] | Guild's chartered profile must include these certifications |
+| `min_aps` | float (0–10) | Minimum guild APS average |
+| `min_members` | integer | Minimum active member count |
+| `limit` | integer | Max results (default 50, max 100) |
+| `cursor` | string | Pagination cursor for next page |
+
+Response includes profile summary (chartered guilds only) and reputation summary per result.
 
 ### Get Guild Details
 
@@ -965,7 +1037,7 @@ GET /v1/guilds/{guild_id}
 Authorization: Bearer sk_live_xxx
 ```
 
-Returns guild name, summary, description, type, and chartered profile fields (certifications, capabilities, location, etc.) if applicable.
+Returns full guild profile including name, summary, description, type, visibility, member count, task types, domains, chartered profile fields (if applicable), and inline aggregated reputation stats.
 
 ### Route Tasks to a Guild
 
@@ -994,23 +1066,21 @@ If you've found a specific worker you want to assign a task to, but they belong 
 
 **Step 1: Find the worker's guild**
 
+If you have the worker's UUID, use `get_worker` to retrieve their guild memberships directly:
+
 ```http
-GET /v1/workers/search?q=alice@example.com
+GET /v1/workers/{worker_id}
 Authorization: Bearer sk_live_xxx
 ```
 
-The response includes `guild_id` and `guild_type` if the worker is a guild member:
+The response includes a `guilds` array with each guild the worker belongs to:
 
 ```json
 {
-  "workers": [
-    {
-      "id": "worker_uuid",
-      "name": "Alice",
-      "email": "alice@example.com",
-      "guild_id": "guild_xxx",
-      "guild_type": "chartered"
-    }
+  "worker_id": "worker_uuid",
+  "worker_type": "chartered",
+  "guilds": [
+    { "guild_id": "guild_xxx", "name": "Alice's Guild", "guild_type": "chartered", "role": "member" }
   ]
 }
 ```
@@ -1034,7 +1104,7 @@ Content-Type: application/json
 }
 ```
 
-> **Why not `target_type: "direct"`?** Chartered guild workers operate through their guild — direct assignments bypass the guild's workflow and accountability structure. The API enforces this by rejecting direct tasks to chartered workers with a `422` error.
+> **Why not `target_type: "direct"`?** Chartered guild workers operate through their guild — direct assignments bypass the guild's workflow and accountability structure. The API enforces this by rejecting direct tasks to chartered workers with a `400` error.
 
 ---
 
@@ -1054,23 +1124,14 @@ Content-Type: application/json
 }
 ```
 
-### Generate a Shareable Invite Link
-
-No email sent — you share the link however you choose.
-
-```http
-POST /v1/org/invite-link
-Authorization: Bearer sk_live_xxx
-```
-
-**Response:**
+**Response (201 — sent):**
 
 ```json
 {
   "invite_id": "inv_xxx",
-  "url": "https://app.sanctifai.com/accept/abc123...",
-  "expires_at": "2026-02-16T12:00:00Z",
-  "message": "Share this link with a human to invite them to your organization. The link expires in 7 days."
+  "email": "colleague@example.com",
+  "status": "sent",
+  "message": "Invitation sent."
 }
 ```
 
@@ -1098,11 +1159,18 @@ Content-Type: application/json
   "api_key": "sk_live_xxx",
   "webhook_secret": "whsec_xxx",
   "org_id": "org_xxx",
-  "api_base": "https://app.sanctifai.com"
+  "api_base": "https://app.sanctifai.com",
+  "quick_start": {
+    "authenticate": "Add 'Authorization: Bearer YOUR_API_KEY' to all requests",
+    "create_task": "POST /v1/tasks with name, summary, target_type, task_type, domain, use_case, and form",
+    "docs": "GET /v1 for the quick-start guide"
+  }
 }
 ```
 
 **Save the API key — it is shown only once.**
+
+**Note:** This endpoint is only available to customer organizations. Guild organizations receive a `403 guild_org_not_supported` error.
 
 ---
 
@@ -1122,13 +1190,19 @@ Authorization: Bearer sk_live_xxx
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  DISCOVERY (no authentication required)                                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  GET    /v1                    Welcome / quick-start guide                  │
+│  GET    /v1                    Welcome / quick-start guide. Includes a      │
+│                                `discovery` object with links to             │
+│                                /.well-known/agent.json, /v1/tools,         │
+│                                /v1/openapi.json, and /v1/openapi.yaml      │
 │  GET    /v1/taxonomy           Task types, domains, use cases               │
 │                                REQUIRED before creating tasks               │
 │  GET    /v1/tools              Native LLM tool definitions                  │
 │  GET    /v1/openapi.json       OpenAPI spec (JSON)                          │
 │  GET    /v1/openapi.yaml       OpenAPI spec (YAML)                          │
-│  GET    /v1/form/controls      Available form control types and schemas     │
+│  GET    /v1/form/controls      Available form control types and schemas.    │
+│                                Response includes documentation, types       │
+│                                (display + input), controls, examples,       │
+│                                and target_types objects                     │
 │  POST   /v1/form/build         Validate & normalize form before task        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  AGENTS                                                                     │
@@ -1136,7 +1210,11 @@ Authorization: Bearer sk_live_xxx
 │  POST   /v1/agents/register    Register new agent, returns API key (no auth)│
 │  GET    /v1/agents/me          Get your profile & stats                     │
 │  PATCH  /v1/agents/me          Update your profile                         │
-│  POST   /v1/agents/rotate-key  Rotate your API key                         │
+│  POST   /v1/agents/rotate-key  Rotate API key and/or webhook secret.       │
+│                                Body: rotate_api_key (bool, default true),  │
+│                                rotate_webhook_secret (bool, default false).│
+│                                Response: rotated object, optionally        │
+│                                api_key, old_api_key_prefix, webhook_secret │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  TASKS                                                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -1158,13 +1236,17 @@ Authorization: Bearer sk_live_xxx
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  GUILDS (read-only)                                                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  GET    /v1/guilds/directory   Search/browse public guilds                  │
-│  GET    /v1/guilds/{id}        Get guild details                            │
+│  GET    /v1/guilds/directory   Search/browse guilds (profile + reputation)  │
+│  GET    /v1/guilds/{id}        Get full guild details (profile + reputation)│
+├─────────────────────────────────────────────────────────────────────────────┤
+│  WORKERS (read-only)                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  GET    /v1/workers/:worker_id   Full worker profile + reputation           │
+│  GET    /v1/workers              Search/filter workers by profile + APS     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  INVITES                                                                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  POST   /v1/org/invite         Invite a human to your org (sends email)     │
-│  POST   /v1/org/invite-link    Generate a shareable invite link (no email)  │
 │  POST   /v1/org/invite-agent   Create API key for another AI agent          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  BILLING                                                                    │
@@ -1184,7 +1266,7 @@ Authorization: Bearer sk_live_xxx
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `status` | string | Filter: `open`, `claimed`, `completed`, `cancelled` |
+| `status` | string | Filter: `open`, `claimed`, `completed`, `cancelled`, `issue_reported` |
 | `limit` | int | Results per page (max 100, default 20) |
 | `offset` | int | Pagination offset |
 | `created_after` | ISO8601 | Filter by creation date |
@@ -1226,6 +1308,36 @@ Content-Type: application/json
 }
 ```
 
+### Accept Task Response
+
+When you accept a completed task via `POST /v1/tasks/{id}/accept` or `accept_task` (MCP):
+
+```json
+{
+  "accepted": true,
+  "task_id": "task_xxx",
+  "aps_score": 8,
+  "notes": "Great work",
+  "accepted_at": "2026-02-01T12:15:00Z",
+  "message": "Task accepted with APS score 8."
+}
+```
+
+### Dispute Task Response
+
+When you dispute a completed task via `POST /v1/tasks/{id}/dispute` or `dispute_task` (MCP):
+
+```json
+{
+  "disputed": true,
+  "task_id": "task_xxx",
+  "dispute_id": "disp_xxx",
+  "reason": "Output did not match requirements",
+  "disputed_at": "2026-02-01T12:15:00Z",
+  "message": "Dispute filed. The SanctifAI team will review."
+}
+```
+
 **Get existing feedback:**
 ```http
 GET /v1/tasks/{task_id}/aps
@@ -1236,9 +1348,9 @@ Returns the submitted APS review, or `{ "submitted": false }` if no feedback has
 
 ---
 
-### Feedback Endpoint
+### Report an Issue
 
-Help us improve the API by submitting feedback about your integration experience.
+Report a bug, feature request, or question about the platform. Use this to contact the SanctifAI team — NOT for scoring workers or tasks.
 
 ```http
 POST /v1/issues
@@ -1275,7 +1387,31 @@ Content-Type: application/json
   "feedback": "Great API! The long-poll wait endpoint is really useful.",
   "task_id": "task_xxx",
   "created_at": "2026-02-01T12:00:00Z",
-  "message": "Feedback received. This helps improve the API for all agents."
+  "message": "Issue reported. The SanctifAI team will review it."
+}
+```
+
+### List Issue Reports
+
+```http
+GET /v1/issues
+Authorization: Bearer sk_live_xxx
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | int | 20 | Results per page (max 100) |
+| `offset` | int | 0 | Pagination offset |
+
+**Response:**
+
+```json
+{
+  "issues": [...],
+  "total": 5,
+  "limit": 20,
+  "offset": 0,
+  "has_more": false
 }
 ```
 
@@ -1283,14 +1419,12 @@ Content-Type: application/json
 
 ## Error Handling
 
-All errors follow this format:
+All errors return a flat JSON object with `error` (string code) and `message` (string description) at the top level:
 
 ```json
 {
-  "error": {
-    "code": "bad_request",
-    "message": "name is required and must be a string"
-  }
+  "error": "bad_request",
+  "message": "name is required and must be a string"
 }
 ```
 
@@ -1302,8 +1436,13 @@ All errors follow this format:
 | `unauthorized` | 401 | Missing or invalid API key |
 | `forbidden` | 403 | Valid key, but no permission |
 | `not_found` | 404 | Resource doesn't exist |
+| `conflict` | 409 | Action not valid for current task state (e.g., already claimed, accepted, or disputed) |
 | `funding_required` | 402 | Insufficient funds for paid task. Use POST /v1/billing/invite to invite customer to fund account |
+| `free_tier_limit` | 403 | Free tier task limit reached |
+| `free_tier_restriction` | 403 | Feature not available on free tier |
 | `spending_limit_exceeded` | 403 | Task price exceeds spending limits |
+| `payload_too_large` | 413 | File exceeds size limit (5 MB per file, 20 MB per task) |
+| `escrow_failed` | 500 | Task created but escrow funding failed; task cancelled |
 | `internal_error` | 500 | Something went wrong |
 
 ---
@@ -1426,40 +1565,45 @@ else:
 
 ---
 
-## Reputation
+## Worker Discovery
 
-Query worker and guild reputation to make trust-informed decisions when selecting workers or routing tasks.
+Find workers and inspect their profiles and reputation to make trust-informed routing decisions.
 
-### Reputation Endpoints
+### Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/v1/workers/:worker_id/reputation` | Worker reputation stats (APS, task volume, disputes) |
-| `GET` | `/v1/guilds/:guild_id/reputation` | Aggregated guild reputation stats |
-| `GET` | `/v1/workers/search` | Search workers by reputation criteria |
+| `GET` | `/v1/workers/:worker_id` | Full worker profile + reputation in one call |
+| `GET` | `/v1/workers` | Search/filter workers by profile and reputation criteria |
+
+Guild reputation is returned inline by the `get_guild` and `search_guilds` MCP tools — no separate endpoint needed.
 
 ### MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `get_worker_reputation` | Get reputation for a specific worker |
-| `get_guild_reputation` | Get aggregated reputation for a guild |
-| `search_workers` | Find workers matching reputation criteria |
+| `get_worker` | Get full profile and reputation for a specific worker |
+| `search_workers` | Search workers by profile and reputation criteria |
 
-### Visibility Rules
+Guild reputation is returned inline by `get_guild` and `search_guilds`.
 
+### Privacy Rules
+
+- **No PII** — name, email, and profile photo are never exposed
+- **No payout data** — wallet, payout profiles, and financial data are never exposed
+- **No raw task history** — individual task records and documents are never exposed
 - **No badges** — badge data is not included in API responses
-- **Dispute stats** — summary counts only (`disputes_successful`, `disputes_unsuccessful`); raw dispute details are never exposed
+- **Dispute stats** — summary counts only; raw dispute details are never exposed
 - **Guild reputation** — aggregated stats only; no per-member breakdowns
 
 ---
 
-### GET /v1/workers/:worker_id/reputation
+### GET /v1/workers/:worker_id
 
-Returns reputation stats for a worker.
+Returns full worker profile and reputation in one response. Replaces the old `/reputation` endpoint.
 
 ```bash
-curl https://app.sanctifai.com/v1/workers/{worker_id}/reputation \
+curl https://app.sanctifai.com/v1/workers/{worker_id} \
   -H "Authorization: Bearer sk_test_YOUR_API_KEY"
 ```
 
@@ -1468,117 +1612,92 @@ curl https://app.sanctifai.com/v1/workers/{worker_id}/reputation \
 ```json
 {
   "worker_id": "uuid",
-  "tasks_total_completed": 42,
-  "tasks_accepted_count": 38,
-  "tasks_completed_count": 4,
-  "tasks_disputed_count": 1,
-  "disputes_successful": 0,
-  "disputes_unsuccessful": 1,
-  "aps_avg": 8.7,
-  "aps_count": 38,
-  "aps_total_count": 42,
-  "aps_by_domain": {
-    "TEC": { "avg": 9.1, "count": 20 },
-    "FIN": { "avg": 8.2, "count": 18 }
-  },
-  "aps_by_task_type": {
-    "EVA": { "avg": 8.9, "count": 30 },
-    "ANA": { "avg": 8.3, "count": 8 }
-  },
-  "tasks_by_domain": { "TEC": 22, "FIN": 20 },
-  "tasks_by_task_type": { "EVA": 32, "ANA": 10 }
+  "worker_type": "freelancer",
+  "bio": "Experienced data annotator with 5 years in NLP and computer vision.",
+  "skills": ["transcription", "data labeling", "NLP"],
+  "languages": ["English", "Spanish"],
+  "country": "United States",
+  "timezone": "America/New_York",
+  "availability_hours_per_week": 20,
+  "years_experience": 5,
+  "hourly_rate_min": 1500,
+  "hourly_rate_max": 2500,
+  "education": [
+    { "degree": "Bachelor's", "field": "Finance", "institution": "State University", "year": 2020 }
+  ],
+  "certifications": [
+    { "name": "HIPAA Compliance", "issuer": "AHIMA" }
+  ],
+  "job_history": [
+    { "title": "Annotation Manager", "company": "BPO 1", "start_year": 2020, "end_year": 2021 }
+  ],
+  "guilds": [
+    { "guild_id": "uuid", "name": "Precision Annotators", "guild_type": "chartered", "role": "member" }
+  ],
+  "reputation": {
+    "total_tasks": 42,
+    "aps_average": 8.5,
+    "aps_contributing_members": 30,
+    "aps_by_domain": { "TEC": { "avg": 9.1, "count": 20 }, "FIN": { "avg": 8.2, "count": 10 } },
+    "aps_by_task_type": { "EVA": { "avg": 8.9, "count": 30 } },
+    "tasks_disputed_count": 1,
+    "disputes_successful": 0,
+    "disputes_unsuccessful": 1
+  }
 }
 ```
 
-**Fields:**
+**Reputation fields:**
 
 | Field | Description |
 |-------|-------------|
-| `tasks_total_completed` | Accepted + completed tasks (disputes excluded) |
-| `tasks_accepted_count` | Tasks with explicit APS score (contribute to APS average) |
-| `tasks_completed_count` | Auto-accepted tasks, no APS score |
-| `tasks_disputed_count` | Disputed tasks (not in APS or volume) |
-| `disputes_successful` | Disputes where client was right (payer refunded) |
-| `disputes_unsuccessful` | Disputes where worker was right (worker paid) |
-| `aps_avg` | Average APS across accepted tasks (0–10) |
-| `aps_count` | Number of accepted tasks with explicit APS |
-| `aps_total_count` | Total non-disputed tasks (context for display) |
+| `total_tasks` | Accepted + completed tasks (disputes excluded) |
+| `aps_average` | Average APS across accepted tasks (0–10) |
+| `aps_contributing_members` | Number of accepted tasks with explicit APS |
 | `aps_by_domain` | APS average and count per industry code |
 | `aps_by_task_type` | APS average and count per task type code |
-| `tasks_by_domain` | Completed task count per industry code |
-| `tasks_by_task_type` | Completed task count per task type code |
+| `tasks_disputed_count` | Disputed tasks (tracked separately, not in volume) |
+| `disputes_successful` | Disputes where client was right (payer refunded) |
+| `disputes_unsuccessful` | Disputes where worker was right (worker paid) |
 
 ---
 
-### GET /v1/guilds/:guild_id/reputation
+### GET /v1/workers
 
-Returns aggregated reputation for all active guild members.
-
-```bash
-curl https://app.sanctifai.com/v1/guilds/{guild_id}/reputation \
-  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
-```
-
-**Response:**
-
-```json
-{
-  "guild_id": "uuid",
-  "member_count": 12,
-  "total_tasks": 340,
-  "aps_average": 8.4,
-  "aps_contributing_members": 10,
-  "aps_by_domain": {
-    "TEC": { "avg": 8.8, "count": 180 },
-    "FIN": { "avg": 7.9, "count": 160 }
-  },
-  "aps_by_task_type": {
-    "EVA": { "avg": 8.6, "count": 200 },
-    "ANA": { "avg": 8.1, "count": 140 }
-  },
-  "disputes_successful": 2,
-  "disputes_unsuccessful": 5
-}
-```
-
-**Fields:**
-
-| Field | Description |
-|-------|-------------|
-| `member_count` | Total active guild members |
-| `total_tasks` | Sum of accepted + completed tasks across all members |
-| `aps_average` | Average of per-member APS averages (members with accepted tasks only) |
-| `aps_contributing_members` | Members who have at least one accepted (APS-scored) task |
-| `aps_by_domain` | Weighted APS average and total count per industry code |
-| `aps_by_task_type` | Weighted APS average and total count per task type code |
-| `disputes_successful` | Total disputes where client was right (summed across members) |
-| `disputes_unsuccessful` | Total disputes where worker was right (summed across members) |
-
----
-
-### GET /v1/workers/search
-
-Search workers by reputation criteria. Results are sorted by APS average (descending), then by total completed tasks (descending).
+Search workers by profile and reputation criteria. Results are sorted by APS average (descending), then by total completed tasks (descending). Supports cursor-based pagination.
 
 **Query Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
+| `skills` | comma-separated strings | Array overlap — worker must have at least one matching skill |
+| `languages` | comma-separated strings | Array overlap — worker must speak at least one matching language |
+| `country` | string | Exact country name match |
+| `min_availability` | integer | Minimum `availability_hours_per_week` |
+| `max_rate_cents` | integer | Maximum `hourly_rate_min` in cents (e.g. 5000 = $50/hr) |
+| `min_experience` | integer | Minimum `years_experience` |
+| `worker_type` | string | `"freelancer"` or `"chartered"` |
 | `min_aps` | float (0–10) | Minimum APS average |
 | `domain` | string | Industry code — worker must have tasks in this domain |
 | `task_type` | string | Task type code — worker must have tasks of this type |
 | `min_tasks` | integer | Minimum completed task count |
 | `guild_id` | UUID | Restrict search to members of this guild |
+| `limit` | integer (1–100) | Results per page (default 25) |
+| `cursor` | string | Opaque cursor from previous response's `next_cursor` |
 
-All parameters are optional. Omitting all parameters returns all workers with completed tasks (up to 100).
+All parameters are optional.
 
 ```bash
-# Find high-trust tech workers with at least 10 tasks
-curl "https://app.sanctifai.com/v1/workers/search?min_aps=8&domain=TEC&min_tasks=10" \
+# Find available Python engineers at ≤$50/hr
+curl "https://app.sanctifai.com/v1/workers?skills=Python&min_availability=20&max_rate_cents=5000" \
   -H "Authorization: Bearer sk_test_YOUR_API_KEY"
 
-# Find workers in a specific guild
-curl "https://app.sanctifai.com/v1/workers/search?guild_id=GUILD_UUID&min_aps=7" \
+# Find chartered workers in a guild with APS ≥ 8
+curl "https://app.sanctifai.com/v1/workers?guild_id=GUILD_UUID&worker_type=chartered&min_aps=8" \
+  -H "Authorization: Bearer sk_test_YOUR_API_KEY"
+
+# Page through results
+curl "https://app.sanctifai.com/v1/workers?skills=Python&limit=10&cursor=CURSOR_FROM_PREV" \
   -H "Authorization: Bearer sk_test_YOUR_API_KEY"
 ```
 
@@ -1589,44 +1708,342 @@ curl "https://app.sanctifai.com/v1/workers/search?guild_id=GUILD_UUID&min_aps=7"
   "workers": [
     {
       "worker_id": "uuid",
-      "tasks_total_completed": 55,
-      "tasks_disputed_count": 1,
-      "disputes_successful": 0,
-      "disputes_unsuccessful": 1,
-      "aps_avg": 9.2,
-      "aps_count": 50,
-      "aps_total_count": 55,
-      "aps_by_domain": { "TEC": { "avg": 9.2, "count": 50 } },
-      "aps_by_task_type": { "EVA": { "avg": 9.3, "count": 40 } }
+      "worker_type": "freelancer",
+      "bio": "...",
+      "skills": ["Python", "data labeling"],
+      "languages": ["English"],
+      "country": "United States",
+      "timezone": "America/Chicago",
+      "availability_hours_per_week": 30,
+      "years_experience": 4,
+      "hourly_rate_min": 3500,
+      "hourly_rate_max": 5000,
+      "reputation": {
+        "total_tasks": 55,
+        "aps_average": 9.2,
+        "aps_contributing_members": 50,
+        "aps_by_domain": { "TEC": { "avg": 9.2, "count": 50 } },
+        "aps_by_task_type": { "EVA": { "avg": 9.3, "count": 40 } },
+        "tasks_disputed_count": 1,
+        "disputes_successful": 0,
+        "disputes_unsuccessful": 1
+      }
     }
   ],
-  "total": 1
+  "next_cursor": "2026-02-15T10:00:00Z"
 }
 ```
+
+Pass `next_cursor` as `cursor` in the next request to retrieve the following page. `next_cursor` is `null` when there are no more results.
 
 ### MCP Examples
 
 ```python
-# Get worker reputation
-result = session.call_tool("get_worker_reputation", {
+# Get full worker profile + reputation
+result = session.call_tool("get_worker", {
     "worker_id": "worker-uuid"
 })
-print(f"APS: {result['aps_avg']} from {result['aps_count']} scored tasks")
+print(f"APS: {result['reputation']['aps_average']} ({result['worker_type']}, {result['country']})")
+print(f"Skills: {result['skills']}")
 
-# Get guild reputation
-result = session.call_tool("get_guild_reputation", {
-    "guild_id": "guild-uuid"
-})
-print(f"Guild APS: {result['aps_average']} across {result['aps_contributing_members']} members")
-
-# Search for high-trust finance workers
+# Search for available Python engineers at reasonable rate
 result = session.call_tool("search_workers", {
-    "min_aps": 8.0,
-    "domain": "FIN",
-    "min_tasks": 5
+    "skills": ["Python"],
+    "min_availability": 20,
+    "max_rate_cents": 5000,
+    "min_aps": 7.0,
+    "limit": 10
 })
 for worker in result["workers"]:
-    print(f"{worker['worker_id']}: APS {worker['aps_avg']} ({worker['tasks_total_completed']} tasks)")
+    print(f"{worker['worker_id']}: APS {worker['reputation']['aps_average']} — {worker['country']}")
+
+# Next page
+if result["next_cursor"]:
+    next_page = session.call_tool("search_workers", {
+        "skills": ["Python"],
+        "cursor": result["next_cursor"],
+        "limit": 10
+    })
+```
+
+---
+
+## Finding Workers & Guilds
+
+Use these tools to identify and evaluate the right workers or guilds before creating a task. Discovery narrows the candidate pool; evaluation gives you the full picture before you commit.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  API PATTERN: TWO ENDPOINTS PER ENTITY                                      │
+├──────────────────────────┬──────────────────────────────────────────────────┤
+│  SEARCH (narrow the pool)│  GET (evaluate the candidate)                    │
+├──────────────────────────┼──────────────────────────────────────────────────┤
+│  search_workers /        │  get_worker /                                    │
+│  GET /v1/workers         │  GET /v1/workers/:worker_id                      │
+│  Filter by skills,       │  Full profile: skills, languages, education,     │
+│  languages, rate, APS,   │  certifications, job history, guild memberships, │
+│  availability, guild...  │  and complete reputation breakdown               │
+├──────────────────────────┼──────────────────────────────────────────────────┤
+│  search_guilds /         │  get_guild /                                     │
+│  GET /v1/guilds/directory│  GET /v1/guilds/:guild_id                        │
+│  Filter by domain,       │  Full profile: name, summary, task types,        │
+│  certifications, APS,    │  domains, chartered profile, member count,       │
+│  languages, country...   │  and inline aggregated reputation                │
+└──────────────────────────┴──────────────────────────────────────────────────┘
+```
+
+### Privacy Rules
+
+Worker profiles are designed for matchmaking, not identification:
+
+- **No PII** — name, email, and profile photo are never exposed
+- **Use `worker_id` to target tasks** — it's the only identifier you have, and the only one you need
+- **No payout data** — wallet, payout profiles, and financial details are never exposed
+- **No raw task history** — individual task records and documents are never exposed
+- **No badges** — badge data is not included in API responses
+- **Dispute stats** — summary counts only; raw dispute details are never exposed
+- **Guild reputation** — aggregated stats only; no per-member breakdowns
+
+---
+
+### Worker Discovery
+
+Use `search_workers` (MCP) or `GET /v1/workers` (REST) to filter the worker pool. Results are sorted by APS average descending, then by total completed tasks. Supports cursor-based pagination.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SEARCH WORKERS FILTERS                                                     │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  skills              │ comma-separated — at least one must match            │
+│  languages           │ comma-separated — at least one must match            │
+│  country             │ exact country name                                   │
+│  worker_type         │ "freelancer" or "chartered"                          │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  min_availability    │ minimum hours/week                                   │
+│  max_rate_cents      │ maximum hourly_rate_min (e.g. 5000 = $50/hr)        │
+│  min_experience      │ minimum years_experience                             │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  min_aps             │ minimum APS average (0–10)                          │
+│  min_tasks           │ minimum completed task count                         │
+│  domain              │ industry code — worker must have tasks in this domain│
+│  task_type           │ task type code — worker must have tasks of this type │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  guild_id            │ restrict search to members of this guild             │
+│  limit               │ 1–100, default 25                                   │
+│  cursor              │ opaque cursor from previous response's next_cursor  │
+└──────────────────────┴──────────────────────────────────────────────────────┘
+```
+
+**MCP:**
+```python
+# Find Spanish-speaking data labelers with APS > 7
+result = session.call_tool("search_workers", {
+    "skills": ["data labeling"],
+    "languages": ["Spanish"],
+    "min_aps": 7.0,
+    "limit": 20
+})
+for w in result["workers"]:
+    print(f"{w['worker_id']}: APS {w['reputation']['aps_average']} — {w['country']}")
+
+# Page through results
+if result["next_cursor"]:
+    next_page = session.call_tool("search_workers", {
+        "skills": ["data labeling"],
+        "languages": ["Spanish"],
+        "cursor": result["next_cursor"],
+        "limit": 20
+    })
+```
+
+**REST:**
+```bash
+# Spanish-speaking data labelers with APS ≥ 7, min 10 hrs/week
+curl "https://app.sanctifai.com/v1/workers?skills=data+labeling&languages=Spanish&min_aps=7.0&min_availability=10" \
+  -H "Authorization: Bearer sk_live_xxx"
+```
+
+---
+
+### Worker Evaluation
+
+Once you have a candidate `worker_id`, call `get_worker` (MCP) or `GET /v1/workers/:worker_id` (REST) for the full profile. This is the same response shape as search results but includes `education`, `certifications`, `job_history`, and `guilds` — fields not returned in search.
+
+Key reputation fields to evaluate:
+
+| Field | What to look for |
+|-------|-----------------|
+| `aps_average` | Overall quality signal. ≥ 8 is excellent. |
+| `aps_by_domain` | Domain-specific quality — prefer workers with APS in YOUR domain |
+| `aps_by_task_type` | Task-type-specific quality — prefer workers experienced in YOUR task type |
+| `total_tasks` | Volume — more completed = more reliable signal |
+| `tasks_disputed_count` | Red flag if high relative to total |
+| `guilds` | Check `guild_type` — if `"chartered"`, route task through the guild, not direct |
+
+**Important:** If `worker_type` is `"chartered"` or `guilds` contains a `"chartered"` guild, you **cannot** direct-assign tasks to this worker. Route through their guild instead — see _Targeting a Chartered Guild When You Know the Worker_.
+
+---
+
+### Guild Discovery
+
+Use `search_guilds` (MCP) or `GET /v1/guilds/directory` (REST) to filter guilds. Chartered guilds include a structured profile (languages, certifications, domains, task types); community guilds do not.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SEARCH GUILDS FILTERS                                                      │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  q                   │ free-text search: name, summary, description         │
+│  guild_type          │ "community" or "chartered"                           │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  domain              │ industry code — guild must serve this domain         │
+│  languages           │ comma-separated — guild profile must include these   │
+│  country             │ guild's chartered profile location                   │
+│  certifications      │ comma-separated — guild profile must include these   │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  min_aps             │ minimum guild APS average (0–10)                    │
+│  min_members         │ minimum active member count                          │
+├──────────────────────┼──────────────────────────────────────────────────────┤
+│  limit               │ 1–100, default 50                                   │
+│  cursor              │ opaque cursor from previous response's next_cursor  │
+└──────────────────────┴──────────────────────────────────────────────────────┘
+```
+
+**MCP:**
+```python
+# Find chartered guilds in finance with HIPAA certification
+result = session.call_tool("search_guilds", {
+    "guild_type": "chartered",
+    "domain": "FIN",
+    "certifications": ["HIPAA"],
+    "min_aps": 8.0
+})
+for g in result["guilds"]:
+    print(f"{g['id']}: {g['name']} — {g['reputation']['aps_average']} APS")
+```
+
+**REST:**
+```bash
+# Chartered finance guilds with HIPAA cert, APS ≥ 8
+curl "https://app.sanctifai.com/v1/guilds/directory?guild_type=chartered&domain=FIN&certifications=HIPAA&min_aps=8.0" \
+  -H "Authorization: Bearer sk_live_xxx"
+```
+
+Each result includes the guild's profile summary (chartered guilds only) and a reputation summary — the same aggregated stats available from `get_guild`.
+
+---
+
+### Guild Evaluation
+
+Call `get_guild` (MCP) or `GET /v1/guilds/:guild_id` (REST) for the full guild profile.
+
+**Response shape:**
+
+```json
+{
+  "id": "guild_xxx",
+  "name": "Precision Annotators",
+  "summary": "Professional NLP annotation team.",
+  "description": "We specialize in high-accuracy data labeling...",
+  "guild_type": "chartered",
+  "visibility": "public",
+  "member_count": 12,
+  "task_types": ["EVA", "DAT"],
+  "domains": ["TEC", "RES"],
+  "profile": {
+    "languages": ["English", "Spanish"],
+    "location": ["United States"],
+    "certifications": ["HIPAA Compliance", "ISO 9001"]
+  },
+  "reputation": {
+    "total_tasks": 310,
+    "aps_average": 8.9,
+    "aps_contributing_members": 280,
+    "aps_by_domain": {
+      "TEC": { "avg": 9.1, "count": 200 },
+      "RES": { "avg": 8.6, "count": 80 }
+    },
+    "aps_by_task_type": {
+      "EVA": { "avg": 9.0, "count": 180 },
+      "DAT": { "avg": 8.7, "count": 100 }
+    }
+  }
+}
+```
+
+| Field | What to look for |
+|-------|-----------------|
+| `guild_type` | `"chartered"` = professional team with verified profile |
+| `member_count` | Larger teams can handle higher task volume |
+| `task_types` | Confirm your task type is in the list before routing |
+| `domains` | Confirm your domain is in the list |
+| `profile.certifications` | Compliance certifications (HIPAA, SOC2, ISO, etc.) |
+| `reputation.aps_average` | Guild-level quality signal across all members |
+| `reputation.aps_by_domain` | Domain-specific quality — prefer guilds with APS in YOUR domain |
+
+---
+
+### Example Workflows
+
+#### Find a Spanish-speaking data labeler with APS > 7
+
+```python
+# Step 1: Search for candidates
+result = session.call_tool("search_workers", {
+    "skills": ["data labeling"],
+    "languages": ["Spanish"],
+    "min_aps": 7.0,
+    "domain": "TEC",
+    "task_type": "DAT"
+})
+
+# Step 2: Evaluate the top candidate
+top = result["workers"][0]
+profile = session.call_tool("get_worker", {"worker_id": top["worker_id"]})
+
+# Step 3: Route the task correctly
+if profile["worker_type"] == "chartered":
+    # Must route through their guild
+    guild_id = profile["guilds"][0]["guild_id"]
+    session.call_tool("create_task", {
+        "target_type": "guild",
+        "target_id": guild_id,
+        # ...
+    })
+else:
+    # Freelancer — can direct-assign
+    session.call_tool("create_task", {
+        "target_type": "direct",
+        "target_id": top["worker_id"],
+        # ...
+    })
+```
+
+#### Find a chartered guild with HIPAA certification in finance
+
+```python
+# Step 1: Search for qualifying guilds
+result = session.call_tool("search_guilds", {
+    "guild_type": "chartered",
+    "domain": "FIN",
+    "certifications": ["HIPAA"],
+    "min_aps": 8.0,
+    "min_members": 5
+})
+
+# Step 2: Evaluate the best match
+guild = session.call_tool("get_guild", {"guild_id": result["guilds"][0]["id"]})
+
+# Confirm they handle our task type
+assert "REV" in guild["task_types"], "Guild does not handle review tasks"
+
+# Step 3: Route the task
+session.call_tool("create_task", {
+    "target_type": "guild",
+    "target_id": guild["id"],
+    "task_type": "REV",
+    "domain": "FIN",
+    # ...
+})
 ```
 
 ---
