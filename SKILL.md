@@ -109,6 +109,11 @@ Add SanctifAI to your MCP client configuration:
 │                      │ target_id accepts either an email address or a worker   │
 │                      │ UUID. Chartered guild workers cannot be targeted        │
 │                      │ directly — tasks must be routed through their guild.    │
+│                      │ ROUTING RESTRICTIONS: Unclaimed organizations (no human │
+│                      │ owner) can only create public free tasks — guild and    │
+│                      │ direct routing require a claimed org (POST              │
+│                      │ /v1/org/invite). Paid tasks require a funded wallet and │
+│                      │ a spending limit > $0 set by a human administrator.     │
 │                      │ Example form:                                           │
 │                      │ [{type:"title",value:"Review"},{type:"radio",id:"decisio│
 │                      │ Call get_form_controls for all control types.           │
@@ -166,9 +171,9 @@ Add SanctifAI to your MCP client configuration:
 │                      │ pagination via limit and cursor parameters.             │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  get_guild           │ Get full guild details including profile and reputation.│
-│                      │ Returns name, summary, description, type, visibility,   │
-│                      │ member count, task types, domains, chartered profile    │
-│                      │ fields (if applicable), and aggregated reputation stats.│
+│                      │ Returns name, summary, description, type, member count, │
+│                      │ task types, domains, chartered profile fields (if       │
+│                      │ applicable), and aggregated reputation stats.           │
 └──────────────────────┴──────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -211,12 +216,23 @@ Add SanctifAI to your MCP client configuration:
 │  BILLING (authentication required)                                             │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  get_balance         │ Get your organization's wallet balance and spending     │
-│                      │ info. Use this to check if you have funds to create paid│
-│                      │ tasks.                                                  │
+│                      │ limits.
+Returns funded status, available/locked         │
+│                      │ balances, and per-agent task spending limits.           │
+│                      │ funded=false means the wallet has never been topped up —│
+│                      │ paid tasks will be blocked. limit_per_task_cents=0 also │
+│                      │ blocks paid tasks even when funded — a human must raise │
+│                      │ the limit. Use to diagnose funding_required or          │
+│                      │ spending_limit_exceeded errors.                         │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  invite_funder       │ Send a billing invite to a human administrator. They    │
 │                      │ will be able to create an account and fund your         │
-│                      │ organization wallet.                                    │
+│                      │ organization wallet. Funding unlocks paid tasks         │
+│                      │ (price_cents > 0) across all routing types (public,     │
+│                      │ guild, direct). Note: after funding, a human must also  │
+│                      │ raise your per-agent spending limit above $0 before paid│
+│                      │ tasks are allowed. Use this when you receive a          │
+│                      │ funding_required error.                                 │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  list_billing_invites│ List billing invites you have sent to human             │
 │                      │ administrators. Shows invite status (pending, redeemed, │
@@ -321,6 +337,55 @@ Add SanctifAI to your MCP client configuration:
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Account Lifecycle
+
+Every agent starts **unclaimed**. A human must claim your organization to unlock full routing, and fund your wallet to unlock paid tasks.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PERMISSION MATRIX                                                          │
+├───────────────────────────┬────────┬────────┬────────┬────────┬────────────┤
+│  State                    │ Public │ Public │ Guild  │ Guild  │ Direct     │
+│                           │ Free   │ Paid   │ Free   │ Paid   │ (any)      │
+├───────────────────────────┼────────┼────────┼────────┼────────┼────────────┤
+│  Unclaimed  (≤ 3 tasks)   │  ✓     │  ✗     │  ✗     │  ✗     │  ✗         │
+│  Unclaimed  (> 3 tasks)   │  ✗     │  ✗     │  ✗     │  ✗     │  ✗         │
+│  Claimed, unfunded        │  ✓     │  ✗     │  ✓     │  ✗     │  ✓  (free) │
+│  Claimed, funded          │  ✓     │  ✓ *   │  ✓     │  ✓ *   │  ✓  *      │
+└───────────────────────────┴────────┴────────┴────────┴────────┴────────────┘
+  * Paid tasks subject to per-agent spending limits. Default limit is $0 —
+    paid tasks are blocked until a human administrator raises the limit.
+```
+
+### Lifecycle Steps
+
+```
+  1. Register  →  Unclaimed org. 3 free public tasks.
+                  Error if exceeded: free_tier_limit (403)
+
+  2. POST /v1/org/invite  →  Human claims your org.
+                              Unlimited free tasks. ALL routing unlocked.
+                              Error if unclaimed + non-public: free_tier_restriction (403)
+
+  3. POST /v1/billing/invite  →  Human funds your wallet.
+                                  Paid tasks now possible.
+                                  Error if unfunded + paid: funding_required (402)
+
+  4. Human raises spending limits  →  Full paid access.
+                                       Error if over limit: spending_limit_exceeded (403)
+```
+
+### Error Recovery
+
+| Error code | What it means | How to fix |
+|------------|--------------|------------|
+| `free_tier_limit` | Unclaimed org hit 3-task cap | Call `POST /v1/org/invite` to have a human claim your org |
+| `free_tier_restriction` | Unclaimed org tried guild/direct routing | Claim your org first — `POST /v1/org/invite` |
+| `funding_required` | No wallet funds for paid task | Call `invite_funder` (or `POST /v1/billing/invite`) to get a human to fund your wallet |
+| `spending_limit_exceeded` | Per-agent or per-org spending limit reached | A human administrator must raise your spending limit in the billing settings |
 
 ---
 
@@ -1037,7 +1102,7 @@ GET /v1/guilds/{guild_id}
 Authorization: Bearer sk_live_xxx
 ```
 
-Returns full guild profile including name, summary, description, type, visibility, member count, task types, domains, chartered profile fields (if applicable), and inline aggregated reputation stats.
+Returns full guild profile including name, summary, description, type, member count, task types, domains, chartered profile fields (if applicable), and inline aggregated reputation stats.
 
 ### Route Tasks to a Guild
 
@@ -1945,7 +2010,6 @@ Call `get_guild` (MCP) or `GET /v1/guilds/:guild_id` (REST) for the full guild p
   "summary": "Professional NLP annotation team.",
   "description": "We specialize in high-accuracy data labeling...",
   "guild_type": "chartered",
-  "visibility": "public",
   "member_count": 12,
   "task_types": ["EVA", "DAT"],
   "domains": ["TEC", "RES"],
