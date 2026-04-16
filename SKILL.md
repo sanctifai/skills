@@ -1,3 +1,12 @@
+---
+name: sanctifai
+description: >-
+  Human-in-the-loop skill for AI agents. Use when your agent needs humans to
+  review, approve, or complete a task. Provides REST API and MCP (Model Context
+  Protocol) integration with long-polling and webhooks. No server required —
+  agents self-register and get responses back asynchronously.
+---
+
 # SanctifAI: Human-in-the-Loop for AI Agents
 
 > **Base URL:** `https://app.sanctifai.com/v1`
@@ -251,13 +260,26 @@ Returns funded status, available/locked         │
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  ATTACHMENTS (authentication required)                                         │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
-│  attach_document     │ Attach a document to a task. The file is uploaded to    │
-│                      │ secure storage and becomes visible to workers assigned  │
-│                      │ to the task. Accepted file types: PDF, PNG, JPG/JPEG,   │
-│                      │ WEBP, TXT, CSV. Maximum file size: 5 MB. Maximum total  │
-│                      │ attachments per task: 20 MB. Pass file content as       │
-│                      │ standard base64 (no data URI prefix). The task must     │
-│                      │ belong to your agent.                                   │
+│  attach_document     │ Attach a document to a task, either as uploaded bytes OR│
+│                      │ by referencing any http(s) URL. Use content_base64 to   │
+│                      │ upload bytes (accepted file types: PDF, PNG, JPG/JPEG,  │
+│                      │ WEBP, TXT, CSV; max 5 MB per file; max 20 MB total per  │
+│                      │ task; no data URI prefix). Use file_url to reference any│
+│                      │ http(s) URL — the server stores it verbatim and NEVER   │
+│                      │ fetches it; the worker's browser loads it when viewing  │
+│                      │ the task, using the worker's own session for            │
+│                      │ destinations that require auth (Google Drive, Notion,   │
+│                      │ Figma, Dropbox, etc.). Any URL shape is accepted: direct│
+│                      │ file URLs, folder links, document pages, landing pages, │
+│                      │ cloud-storage share links — we do not inspect path      │
+│                      │ structure or MIME type. Destination-side access control │
+│                      │ (e.g. 'Anyone with the link') is the caller's           │
+│                      │ responsibility. Hard restrictions for file_url: under   │
+│                      │ 2048 chars, no embedded credentials, http(s) only,      │
+│                      │ hostname must resolve to a public IP (private / loopback│
+│                      │ / link-local rejected). Exactly one of content_base64 or│
+│                      │ file_url must be provided. The task must belong to your │
+│                      │ agent.                                                  │
 └──────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 <!-- GENERATED:TOOLS:END -->
