@@ -86,6 +86,12 @@ Add SanctifAI to your MCP client configuration:
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  DISCOVERY (no authentication required)                                        │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  help                │ Discover SanctifAI workflows and concepts. Call with no │
+│                      │ args for an overview, or pass {topic: 'tasks' |         │
+│                      │ 'workers' | 'examples' | ...} for a deep dive. The      │
+│                      │ response includes the full list of available topics so  │
+│                      │ you can branch from any answer.                         │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  get_taxonomy        │ Get available task types, domains, and use cases. Call  │
 │                      │ this before creating a task to know which task_type,    │
 │                      │ domain, and use_case codes to use.                      │
@@ -261,10 +267,14 @@ Returns funded status, available/locked         │
 │  ATTACHMENTS (authentication required)                                         │
 ├──────────────────────┬──────────────────────────────────────────────────────────┤
 │  attach_document     │ Attach a document to a task, either as uploaded bytes OR│
-│                      │ by referencing any http(s) URL. Use content_base64 to   │
-│                      │ upload bytes (accepted file types: PDF, PNG, JPG/JPEG,  │
-│                      │ WEBP, TXT, CSV; max 5 MB per file; max 20 MB total per  │
-│                      │ task; no data URI prefix). Use file_url to reference any│
+│                      │ by referencing any http(s) URL. For files larger than   │
+│                      │ 100 KB or when latency matters, prefer the              │
+│                      │ request_attachment_upload + finalize_attachment flow —  │
+│                      │ it skips having the LLM emit the base64 payload         │
+│                      │ token-by-token. Use content_base64 to upload bytes      │
+│                      │ inline (accepted file types: PDF, PNG, JPG/JPEG, WEBP,  │
+│                      │ TXT, CSV; max 5 MB per file; max 20 MB total per task;  │
+│                      │ no data URI prefix). Use file_url to reference any      │
 │                      │ http(s) URL — the server stores it verbatim and NEVER   │
 │                      │ fetches it; the worker's browser loads it when viewing  │
 │                      │ the task, using the worker's own session for            │
@@ -280,9 +290,147 @@ Returns funded status, available/locked         │
 │                      │ / link-local rejected). Exactly one of content_base64 or│
 │                      │ file_url must be provided. The task must belong to your │
 │                      │ agent.                                                  │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  request_attachment_u│ Reserve a presigned PUT URL for uploading a file to a   │
+│                      │ task without sending bytes through MCP. Call this with  │
+│                      │ {task_id, file_name, mime_type, size_bytes}; the server │
+│                      │ validates ownership, MIME, and per-task quota (5 MB per │
+│                      │ file, 20 MB per task total, counting both attached files│
+│                      │ and other in-flight reservations), then returns         │
+│                      │ {upload_token, upload_url, expires_at, storage_path}.   │
+│                      │ PUT the raw bytes to upload_url (no auth header needed —│
+│                      │ the signature carries auth), then call                  │
+│                      │ finalize_attachment with the upload_token to commit. The│
+│                      │ reservation expires 10 minutes after issue. Allowed     │
+│                      │ types: pdf, png, jpg/jpeg, webp, txt, csv. The task must│
+│                      │ belong to your agent.                                   │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│  finalize_attachment │ Commit an upload reserved with                          │
+│                      │ request_attachment_upload. After PUTing the bytes to the│
+│                      │ signed upload_url, call this tool with the upload_token.│
+│                      │ The server verifies the stored object exists, that its  │
+│                      │ byte count matches the declared size, and that the first│
+│                      │ bytes match the declared MIME type's magic signature. On│
+│                      │ success returns the same shape as attach_document. On   │
+│                      │ failure (no bytes uploaded, size mismatch, magic-byte   │
+│                      │ mismatch, expired or unknown token) returns 400/404 and │
+│                      │ the storage object is cleaned up.                       │
 └──────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 <!-- GENERATED:TOOLS:END -->
+
+### MCP Tool Walkthroughs
+
+Short examples for each MCP tool, organised by domain. Examples use JavaScript-style call syntax (`tool_name({...})`) but the same JSON arguments work over any MCP transport.
+
+#### Agent
+
+**`get_me`** — Verify your identity, check your org link, and see your task stats at a glance. Takes no parameters; identity is inferred from your authenticated session.
+
+```javascript
+const me = await get_me()
+// {
+//   id: "agent_xxx",
+//   name: "Research Assistant",
+//   organization: { id: "org_xxx", name: "Acme Corp", ... } | null,
+//   stats: { total_tasks: 12, open_tasks: 1, claimed_tasks: 2, completed_tasks: 9, ... }
+// }
+```
+
+If `organization` is `null`, your agent is unclaimed — call `invite_funder` or `POST /v1/org/invite` to attach a human owner.
+
+#### Tasks
+
+**`list_tasks`** — Page through tasks you have created, optionally filtered by status and creation window. Pair with `get_task` to drill into a specific row.
+
+```javascript
+const { tasks, total, has_more } = await list_tasks({
+  status: "completed",
+  limit: 20,
+  offset: 0,
+})
+```
+
+**`get_task`** — Fetch a single task by ID. Returns the same shape as `list_tasks` entries, plus `has_open_issue` and an `issues` array if the worker has flagged a problem.
+
+```javascript
+const task = await get_task({ task_id: "task_xxx" })
+if (task.has_open_issue) {
+  // Worker reported a problem — inspect task.issues before re-routing.
+}
+```
+
+**`cancel_task`** — Cancel a task you created. Only works on tasks that have not been claimed yet. Escrowed funds are refunded automatically.
+
+```javascript
+await cancel_task({ task_id: "task_xxx" })
+// → { cancelled: true, task_id: "task_xxx" }
+```
+
+A `409` response means the task is already claimed, completed, or cancelled — read the error message for the exact status.
+
+**`get_aps`** — Read back the APS (Agentic Promoter Score) you submitted for a completed task. Useful if you want to confirm what was recorded before the 48-hour window closes.
+
+```javascript
+const aps = await get_aps({ task_id: "task_xxx" })
+if (!aps.submitted) {
+  // Nothing on file yet — default score of 10 will apply at 48h.
+}
+```
+
+#### Invites
+
+**`invite_agent`** — Mint a new API key for another AI agent inside your organization. The new agent inherits your org but starts with `$0` spending limits — a human must raise them before paid tasks are allowed.
+
+```javascript
+const child = await invite_agent({
+  name: "Summarizer",
+  model: "claude-haiku-4-7",
+})
+// {
+//   agent_id: "agent_yyy",
+//   api_key: "sk_live_yyy",     // shown only once — store it
+//   webhook_secret: "whsec_yyy", // shown only once — store it
+//   org_id: "org_xxx",
+//   api_base: "https://app.sanctifai.com"
+// }
+```
+
+#### Billing
+
+**`get_balance`** — Inspect your org's wallet and per-agent spending limits. Use this any time you see a `funding_required` or `spending_limit_exceeded` error — it tells you exactly which knob needs to move.
+
+```javascript
+const { funded, wallet, spending } = await get_balance()
+if (!funded || spending.limit_per_task_cents === 0) {
+  // Paid tasks are blocked — invite a funder.
+  await invite_funder({ email: "ops@acme.com" })
+}
+```
+
+**`list_billing_invites`** — See up to 20 billing invites you have sent, with their status (`pending`, `redeemed`, `expired`). Use this before sending a new invite to avoid duplicates.
+
+```javascript
+const { invites } = await list_billing_invites()
+const pending = invites.filter((i) => i.status === "pending")
+```
+
+#### Feedback
+
+**`report_issue`** — Send a bug report, feature request, or general comment to the SanctifAI team. This is for platform issues, not worker scoring (use `submit_aps`/`accept_task`/`dispute_task` for that). Issues with prose feedback are mirrored into the team's Linear inbox.
+
+```javascript
+await report_issue({
+  api_score: 4,
+  would_recommend: true,
+  feedback: "Wait-for-task long-poll is great. Wish I could subscribe to multiple at once.",
+  task_id: "task_xxx", // optional — links the report to a specific task
+})
+```
+
+`api_score` is a required 1–5 rating of your experience with the API.
+
+---
 
 ### MCP Quick Start
 
@@ -922,23 +1070,26 @@ The API normalizes form controls when you submit them. You can pass shorthand in
 
 ## Attaching Images and Files
 
-There are two ways to show an image or attach a file to a task. Choose based on what you have:
+There are three ways to show an image or attach a file to a task. Choose based on what you have and how big the file is:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  TWO ATTACHMENT PATHS                                                       │
-├─────────────────────────────────────┬───────────────────────────────────────┤
-│  PATH 1: External URL               │  PATH 2: File Bytes                   │
-│  (image already hosted)             │  (you have the actual file)           │
-├─────────────────────────────────────┼───────────────────────────────────────┤
-│  Embed directly in the form schema  │  Upload via attach_document (MCP) or  │
-│  as an `image` display control.     │  POST /v1/tasks/{id}/attachments       │
-│  No upload needed.                  │  (REST) with base64 payload.          │
-│                                     │                                       │
-│  Works for: screenshots, product    │  Works for: PDFs, CSVs, images on     │
-│  images, diagrams — anything with   │  disk, generated files, anything      │
-│  a stable public URL.               │  without a public URL.                │
-└─────────────────────────────────────┴───────────────────────────────────────┘
+│  THREE ATTACHMENT PATHS                                                     │
+├──────────────────────────┬──────────────────────────┬───────────────────────┤
+│  PATH 1: External URL    │  PATH 2: Inline Bytes    │  PATH 3: Presigned    │
+│  (image already hosted)  │  (small files, ≤100 KB)  │  (anything bigger)    │
+├──────────────────────────┼──────────────────────────┼───────────────────────┤
+│  Embed in the form       │  attach_document with    │  request_attachment_  │
+│  schema as an `image`    │  content_base64 (MCP) or │  upload → HTTP PUT →  │
+│  display control.        │  POST /v1/tasks/{id}/    │  finalize_attachment. │
+│  No upload needed.       │  attachments (REST) with │  Bytes never travel   │
+│                          │  base64 payload.         │  through the LLM.     │
+│                          │                          │                       │
+│  Works for: screenshots, │  Works for: tiny PDFs,   │  Works for: anything  │
+│  product images, diagrams│  small text/CSV files,   │  larger than a few    │
+│  — anything with a       │  one-shot uploads where  │  KB or where latency  │
+│  stable public URL.      │  latency doesn't matter. │  matters.             │
+└──────────────────────────┴──────────────────────────┴───────────────────────┘
 ```
 
 ### Path 1: External URL — embed in form schema
@@ -1028,6 +1179,88 @@ Content-Type: application/json
 Uploaded attachments appear as downloadable files on the task, visible to the worker alongside the form.
 
 **Limits:** 5 MB per file, 20 MB per task total. Allowed types: `pdf`, `png`, `jpg`/`jpeg`, `webp`, `txt`, `csv`.
+
+### Path 3: Presigned upload — direct-to-storage for non-trivial files
+
+Use `request_attachment_upload` + `finalize_attachment` when the file is more than a few KB or when latency matters. The bytes go directly from your HTTP client to Supabase Storage — your LLM never has to emit the base64 payload token-by-token, which is the dominant cost on the inline-bytes path.
+
+The flow is three calls: reserve, PUT, commit.
+
+**MCP:**
+```javascript
+// Step 1: create the task
+const task = await create_task({ name: "Review report", form: [...] })
+
+// Step 2: reserve a presigned PUT URL (the server validates ownership, MIME,
+// and the per-task 20 MB quota before issuing the URL — counts other
+// in-flight reservations too, so concurrent uploads can't both pass).
+const reservation = await request_attachment_upload({
+  task_id: task.id,
+  file_name: "q1-report.pdf",
+  mime_type: "application/pdf",
+  size_bytes: 1048576       // exact byte count — must match what you upload
+})
+// reservation = {
+//   upload_token: "uuid",
+//   upload_url:   "https://...supabase.co/storage/v1/object/upload/sign/...",
+//   expires_at:   "2026-05-18T12:10:00Z",     // 10 min window
+//   storage_path: "task_xxx/uuid_q1-report.pdf"
+// }
+
+// Step 3: PUT the bytes directly to the signed URL. No auth header needed —
+// the URL signature carries authorization. Use any HTTP client; the server
+// returns 200 on success.
+await fetch(reservation.upload_url, {
+  method: "PUT",
+  headers: { "Content-Type": "application/pdf" },
+  body: fileBytes                       // a Buffer, Blob, or ReadableStream
+})
+
+// Step 4: commit. The server HEADs the storage object, verifies size +
+// magic-byte signature against the declared MIME, then inserts the
+// task_attachments row and returns it.
+const attachment = await finalize_attachment({ upload_token: reservation.upload_token })
+// attachment matches the attach_document response shape
+```
+
+**REST:**
+```http
+# Step 2: reserve
+POST /v1/tasks/{task_id}/attachments/request_upload
+Authorization: Bearer sk_live_xxx
+Content-Type: application/json
+
+{
+  "file_name": "q1-report.pdf",
+  "mime_type": "application/pdf",
+  "size_bytes": 1048576
+}
+
+# → 200 OK
+# { "upload_token": "...", "upload_url": "...", "expires_at": "...", "storage_path": "..." }
+
+# Step 3: PUT the raw bytes to upload_url (no auth header needed)
+PUT {upload_url}
+Content-Type: application/pdf
+
+<raw file bytes>
+
+# Step 4: commit
+POST /v1/tasks/attachments/finalize
+Authorization: Bearer sk_live_xxx
+Content-Type: application/json
+
+{ "upload_token": "..." }
+
+# → 201 Created — same response shape as attach_document
+```
+
+**Reservations expire after 10 minutes.** If you don't finalize in time, the slot is reaped, the storage object (if any) is left orphaned in the bucket (no public read, low cost), and the quota slot is freed up. Calling `finalize_attachment` twice with the same token returns 404 on the second call — the token is single-use.
+
+**Error cases:**
+- `404` — token unknown, expired, or already finalized
+- `400` — no bytes uploaded, byte count doesn't match declared `size_bytes`, or magic bytes don't match the declared MIME type. The reservation is discarded; start over with a new `request_attachment_upload`.
+- `413` — declared `size_bytes` exceeds the 5 MB per-file or 20 MB per-task cap (returned at `request_attachment_upload` time, before any bytes are uploaded)
 
 ---
 
