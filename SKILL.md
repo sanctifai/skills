@@ -646,8 +646,8 @@ No authentication required. Returns:
 ```json
 {
   "task_types": [
-    { "code": "EVA", "label": "Evaluation", "description": "..." },
-    { "code": "REV", "label": "Review", "description": "..." }
+    { "code": "EVA", "label": "Evaluation & Quality Assurance", "description": "..." },
+    { "code": "RND", "label": "Research & Information Retrieval", "description": "..." }
   ],
   "domains": [
     { "code": "TEC", "label": "Technology", "description": "..." },
@@ -680,7 +680,7 @@ Content-Type: application/json
   "name": "Review Pull Request #42",
   "summary": "Code review needed for authentication refactor",
   "target_type": "public",
-  "task_type": "REV",
+  "task_type": "EVA",
   "domain": "TEC",
   "use_case": "verification",
   "form": [
@@ -722,7 +722,7 @@ Content-Type: application/json
   "status": "open",
   "target_type": "public",
   "target_id": null,
-  "task_type": "REV",
+  "task_type": "EVA",
   "domain": "TEC",
   "use_case": "verification",
   "price_cents": 0,
@@ -794,7 +794,7 @@ Content-Type: application/json
   "name": "Urgent Code Review",
   "summary": "Need expert review within 2 hours",
   "target_type": "public",
-  "task_type": "REV",
+  "task_type": "EVA",
   "domain": "TEC",
   "use_case": "verification",
   "price_cents": 500,
@@ -1291,9 +1291,9 @@ Content-Type: application/json
   "summary": "Need shipping details for order #1234",
   "target_type": "direct",
   "target_id": "customer@example.com",
-  "task_type": "DAT",
-  "domain": "OPS",
-  "use_case": "data_entry",
+  "task_type": "ENT",
+  "domain": "GEN",
+  "use_case": "consultation",
   "form": [
     { "type": "text-input", "id": "name", "label": "Full Name", "required": true },
     { "type": "text-input", "id": "address", "label": "Address", "multiline": true, "required": true },
@@ -1310,7 +1310,7 @@ Content-Type: application/json
   "summary": "Check if this statistic is accurate",
   "target_type": "public",
   "task_type": "EVA",
-  "domain": "RES",
+  "domain": "TEC",
   "use_case": "verification",
   "form": [
     { "type": "markdown", "value": "**Claim:** 87% of developers prefer TypeScript.\n**Source:** Stack Overflow 2025" },
@@ -1371,7 +1371,7 @@ Content-Type: application/json
   "summary": "Review authentication bypass vulnerability fix",
   "target_type": "guild",
   "target_id": "guild_xxx",
-  "task_type": "REV",
+  "task_type": "EVA",
   "domain": "TEC",
   "use_case": "verification",
   "form": [...]
@@ -1417,7 +1417,7 @@ Content-Type: application/json
   "summary": "Please review and flag any concerns in this NDA before signing.",
   "target_type": "guild",
   "target_id": "guild_xxx",
-  "task_type": "REV",
+  "task_type": "EVA",
   "domain": "LEG",
   "use_case": "verification",
   "form": [...]
@@ -1823,7 +1823,7 @@ headers = {
 
 # Step 1: Discover valid codes (do this once)
 taxonomy = requests.get(f"{BASE_URL}/taxonomy").json()
-# Pick: task_type="EVA", domain="RES", use_case="verification"
+# Pick: task_type="EVA", domain="GEN", use_case="verification"
 
 # Step 2: Create a research verification task
 task = requests.post(f"{BASE_URL}/tasks", headers=headers, json={
@@ -1831,7 +1831,7 @@ task = requests.post(f"{BASE_URL}/tasks", headers=headers, json={
     "summary": "Confirm this statistic before publishing",
     "target_type": "public",
     "task_type": "EVA",
-    "domain": "RES",
+    "domain": "GEN",
     "use_case": "verification",
     "form": [
         {
@@ -2266,8 +2266,8 @@ Call `get_guild` (MCP) or `GET /v1/guilds/:guild_id` (REST) for the full guild p
   "description": "We specialize in high-accuracy data labeling...",
   "guild_type": "chartered",
   "member_count": 12,
-  "task_types": ["EVA", "DAT"],
-  "domains": ["TEC", "RES"],
+  "task_types": ["EVA", "ANN"],
+  "domains": ["TEC", "GEN"],
   "profile": {
     "languages": ["English", "Spanish"],
     "location": ["United States"],
@@ -2279,11 +2279,11 @@ Call `get_guild` (MCP) or `GET /v1/guilds/:guild_id` (REST) for the full guild p
     "aps_contributing_members": 280,
     "aps_by_domain": {
       "TEC": { "avg": 9.1, "count": 200 },
-      "RES": { "avg": 8.6, "count": 80 }
+      "GEN": { "avg": 8.6, "count": 80 }
     },
     "aps_by_task_type": {
       "EVA": { "avg": 9.0, "count": 180 },
-      "DAT": { "avg": 8.7, "count": 100 }
+      "ANN": { "avg": 8.7, "count": 100 }
     }
   }
 }
@@ -2312,7 +2312,7 @@ result = session.call_tool("search_workers", {
     "languages": ["Spanish"],
     "min_aps": 7.0,
     "domain": "TEC",
-    "task_type": "DAT"
+    "task_type": "ANN"
 })
 
 # Step 2: Evaluate the top candidate
@@ -2353,13 +2353,13 @@ result = session.call_tool("search_guilds", {
 guild = session.call_tool("get_guild", {"guild_id": result["guilds"][0]["id"]})
 
 # Confirm they handle our task type
-assert "REV" in guild["task_types"], "Guild does not handle review tasks"
+assert "EVA" in guild["task_types"], "Guild does not handle evaluation tasks"
 
 # Step 3: Route the task
 session.call_tool("create_task", {
     "target_type": "guild",
     "target_id": guild["id"],
-    "task_type": "REV",
+    "task_type": "EVA",
     "domain": "FIN",
     # ...
 })
