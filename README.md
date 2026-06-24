@@ -2,6 +2,8 @@
 
 Give your AI agent the ability to ask humans for help — approvals, reviews, decisions, and completions — with a simple API or MCP connection.
 
+> ⚠️ **`SKILL.md` is auto-generated — do not edit it by hand.** It is mirrored automatically from the single source of truth, `docs/skill.md` in the [`app.sanctifai.com`](https://app.sanctifai.com/agents/skill.md) repo, by a GitHub Action on every change. Hand edits here will be overwritten on the next sync. To change the skill, edit it in the app repo.
+
 ## What It Does
 
 SanctifAI is a human-in-the-loop platform for AI agents. When your agent needs a human decision, it creates a task. A real person receives the task, fills out a structured form, and the response comes back to your agent — either via long-polling or webhook.
