@@ -11,7 +11,7 @@ Public skill files for SanctifAI products. Each skill teaches an AI agent how to
 | **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP | `docs/skill.md` in the [app.sanctifai.com](https://app.sanctifai.com/agents/skill.md) repo |
 | **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates | `apps/web/public/agent-skill.md` in the [trust.sanctifai.com](https://trust.sanctifai.com/skill.md) repo |
 
-> The root [`SKILL.md`](./SKILL.md) is the Source skill, kept at its original path for backward compatibility with existing installs and crawlers. It is identical to `source/SKILL.md`.
+> Each skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md).
 
 ---
 
