@@ -137,6 +137,7 @@ commitments and selected metadata.
 | `human_fp` | Yes | Yes (`humanFingerprint`) | Yes | Pseudonymous WebAuthn / passkey fingerprint |
 | `bond_eligible` | Yes | Yes | Yes | Whether attestation may back a bond product |
 | `rp_id` / `origin` | RP ID on cert | No | Yes | Domain binding and allowlist enforcement |
+| `idempotency_key` | No | No | Yes | **Required** — UUID (`crypto.randomUUID()`) that de-dupes retries; add it on the backend. Missing/non-UUID → `400` |
 | `taskData` / `resultData` | **No** (hashed only) | **No** | **No** raw copy | Hashed client-side; plaintext never sent |
 
 Optional `customer_id` (UUID) may appear on the certificate if supplied — still
@@ -194,8 +195,16 @@ A complete embedded integration **enrolls the reviewer, then attests**:
 6. Display participation_id, certificate_url, and the qr_url QR image.
 ```
 
-Skipping step 1 is the most common one-shot failure: `presence/verify` returns
-`No WebAuthn credentials found` until the reviewer has enrolled a passkey.
+Skipping step 1 is the most common one-shot failure: for a reviewer who hasn't
+enrolled, `presence/options` returns **`404 No WebAuthn credentials found`**. Treat
+that 404 as the trigger to run enrollment inline (step 1), then retry the presence
+flow — no separate "is enrolled?" check needed.
+
+> **`registration/verify` needs more than the credential.** Send `tenant_id`,
+> `user_id`, `rp_id`, and `challenge_id` **alongside** `credential` — and the
+> `credential` must include `clientExtensionResults`
+> (`cred.getClientExtensionResults?.() ?? {}`). Omitting any required field is a
+> `400`. Full enrollment example in [reference.md](reference.md).
 
 **Backend** (server-side; holds `TRUST_API_KEY`):
 
