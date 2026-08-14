@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.2.0
+version: 1.3.0
 updated: 2026-08-14
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.2.0 · Last updated 2026-08-14.** This skill and its
+**Version 1.3.0 · Last updated 2026-08-15.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -402,6 +402,9 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
+- **1.3.0 — 2026-08-15.** No change to this skill's guidance; `reference.md`
+  gained the `excludeCredentials`-now-populated note and a consistent error
+  envelope (`code` + `error` on every family). Version kept in lockstep.
 - **1.2.0 — 2026-08-14.** No change to this skill's guidance; `reference.md`
   gained the `GET /api/v1/participations` **list** endpoint, the per-tenant
   **rate-limit contract**, the v1 read error shape, an advanced-`POST`-create
