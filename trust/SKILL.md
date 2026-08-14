@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.1.0
-updated: 2026-08-12
+version: 1.2.0
+updated: 2026-08-14
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.1.0 · Last updated 2026-08-12.** This skill and its
+**Version 1.2.0 · Last updated 2026-08-14.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -402,7 +402,13 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
-- **1.1.0 — 2026-08-12.** Reset window stated (calendar month, UTC). Smoke-test
+- **1.2.0 — 2026-08-14.** No change to this skill's guidance; `reference.md`
+  gained the `GET /api/v1/participations` **list** endpoint, the per-tenant
+  **rate-limit contract**, the v1 read error shape, an advanced-`POST`-create
+  note, and a `bond_eligible` default fix. The former internal `docs/api/*`
+  reference was retired in favour of `reference.md` as the single published
+  contract. Version bumped to keep the set in lockstep.
+- **1.1.0 — 2026-08-14.** Reset window stated (calendar month, UTC). Smoke-test
   note that a `400` is not a credential verdict (real-key/bogus-key pair) and the
   `307 → /login` path hint. Full detail — the `GET /api/v1/participations` read
   endpoints, Origin-allowlist validation in the proxy, the two error-envelope
