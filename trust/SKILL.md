@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.3.0
-updated: 2026-08-14
+version: 1.3.1
+updated: 2026-08-17
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.3.0 · Last updated 2026-08-15.** This skill and its
+**Version 1.3.1 · Last updated 2026-08-17.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -48,12 +48,17 @@ TRUST_API_KEY=sk_live_...        # tenant-scoped secret — NEVER in client code
 
 ### If you don't have a Tenant ID or API key yet
 
-Sign up at **https://trust.sanctifai.com**. New accounts go through an onboarding
-wizard that starts a **free 7-day trial** and provisions what you need:
+Sign up at **https://trust.sanctifai.com**. Start free and scale as your
+attestation volume grows — the **Developer** plan is free forever, with **no
+trial period and no expiry**. New accounts go through an onboarding wizard that
+provisions what you need:
 
 - **1 tenant** (with Tenant ID)
 - **1 default API key** (`sk_live_…`) — copy it during setup; it is shown once
-- Plan limits on the trial: **1 tenant**, **10 users**, **100 attestations**
+
+Developer plan limits: **100 attestations/month**, **1 tenant**, **unlimited
+reviewers**, 30-day audit history. Paid plans raise the attestation, tenant, and
+audit-history limits — see [pricing](https://sanctifai.com/trust/pricing).
 
 The attestation quota is counted per **calendar month in UTC** — it resets at
 `00:00 UTC` on the 1st, not on your signup/subscription anniversary. Track your
@@ -402,6 +407,11 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
+- **1.3.1 — 2026-08-17.** Corrected the signup section: there is **no free
+  trial**. The **Developer** plan is free forever (100 attestations/month, 1
+  tenant, unlimited reviewers, 30-day audit history); the previously documented
+  "7-day trial" and its "10 users" limit never existed. Added a pointer to the
+  pricing page. `reference.md` unchanged; version kept in lockstep.
 - **1.3.0 — 2026-08-15.** No change to this skill's guidance; `reference.md`
   gained the `excludeCredentials`-now-populated note and a consistent error
   envelope (`code` + `error` on every family). Version kept in lockstep.
