@@ -2,273 +2,163 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.7.0
+version: 2.0.0
 updated: 2026-09-07
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.7.0 · Last updated 2026-09-07.** This skill and its
-[`reference.md`](reference.md) share one version; the [changelog](#changelog) is
-at the end. If a copy of this file (e.g. an external mirror) shows a different
-version, the lower one is stale.
+SanctifAI Trust turns a unit of human work into a verifiable **Proof of Human**:
+the person confirms presence with WebAuthn (Touch ID / Windows Hello / passkey),
+and you get a privacy-preserving participation plus a public certificate URL
+(and optional on-chain seal). Raw task data never leaves the client — only
+`0x`+SHA-256 commitments are sent.
 
-SanctifAI Trust turns a unit of human work into a verifiable **Proof of Human**
-attestation: a person confirms presence with WebAuthn (Touch ID / Windows Hello /
-passkey), and the platform records a privacy-preserving participation plus an
-optional on-chain seal and a public certificate URL + QR code. Raw task data
-never leaves the browser — only `0x`+SHA-256 commitments are sent.
+Use this when you need to **prove a human did something** (approved a wire,
+reviewed content, signed off a release, completed a gig) and receive
+`participation_id` + `certificate_url`.
 
-Use this skill when a user wants to **prove a human did something** (approved a
-wire, reviewed content, signed off a release, completed a gig task) and get a
-`participation_id` + `certificate_url` back.
+**Base API:** `https://trust.sanctifai.com`. Three equal surfaces, same outcome:
 
-**No package install required.** You integrate by calling the REST API directly
-(embedded path) or by including one hosted `<script>` (extension path). Base API:
-`https://trust.sanctifai.com`.
+1. **Embedded** — Proof of Human inside the customer's own app (`/api/presence/*`, API key on their backend). No package install.
+2. **Chrome extension** — SanctifAI Chrome extension + hosted `sanctifai-presence.js` (worker-bound identity). No package install.
+3. **Chat bridge** — attestations minted for an AI agent via the hosted bridge at `https://bridge.trust.sanctifai.com`.
 
-## Step 0 — Use the production API (not a local Trust instance)
+Local Trust on `localhost` is the docs site, not the production API.
 
-Set `TRUST_API_BASE_URL=https://trust.sanctifai.com` and call that. **A Trust
-site running on `http://localhost:3000` is the docs/demo site — treat it as
-documentation, not the API target**, unless you have explicitly confirmed it runs
-the full API with your tenant's origin allowlist. Pointing integration at a local
-Trust instance is a common one-shot failure: it causes origin-allowlist and CORS
-errors that look like API bugs. Unless told otherwise, target production.
+## Choose a surface
 
-## Step 1 — Get tenant credentials first (don't skip to the extension)
+Pick the surface that matches where the human actually works. All three mint the
+same participation + `certificate_url`.
 
-Embedded integration needs two tenant credentials that live **only on your
-backend**:
+```
+                         Where does the human work?
+                                    │
+         ┌──────────────────────────┼──────────────────────────┐
+         │                          │                          │
+         ▼                          ▼                          ▼
+    You control the           External / BYO             AI agent / chat
+    app (employees,           workforce, or an           with no WebAuthn
+    your product UI)          app you don't control      browser context
+         │                          │                          │
+         ▼                          ▼                          ▼
+     EMBEDDED                   EXTENSION                  CHAT BRIDGE
+     REST /api/presence/*       Chrome extension +         Hosted mint →
+     API key on YOUR backend    sanctifai-presence.js      approve_url in Chrome
+     You supply user_id         Worker supplies identity   → poll → certificate_url
+```
+
+- **Embedded** — default for apps you control. WebAuthn runs in your page.
+- **Extension** — the worker installs the SanctifAI extension and attests from pages you don't own.
+- **Chat bridge** — the agent has no `navigator.credentials`; a human opens the approval link in Chrome.
+
+Don't pick Extension merely because credentials are missing — get Embedded
+credentials instead.
+
+## Credentials
+
+**Embedded** needs two values on the **backend only**:
 
 ```bash
 TRUST_TENANT_ID=your_tenant_id   # ≤ 12 chars
-TRUST_API_KEY=sk_live_...        # tenant-scoped secret — NEVER in client code
+TRUST_API_KEY=sk_live_...        # never in the browser, never in agent chat
 ```
 
-### If you don't have a Tenant ID or API key yet
+Sign up at **https://trust.sanctifai.com**. The **Developer** plan is free
+forever (no trial, no expiry): **100 attestations/month** (calendar month, UTC),
+**1 tenant**, **unlimited reviewers**, 30-day audit history. Onboarding
+provisions the tenant and a default API key (`sk_live_…`, shown once). Paid
+plans raise limits — see [pricing](https://sanctifai.com/trust/pricing).
 
-Sign up at **https://trust.sanctifai.com**. Start free and scale as your
-attestation volume grows — the **Developer** plan is free forever, with **no
-trial period and no expiry**. New accounts go through an onboarding wizard that
-provisions what you need:
+**Extension:** the worker configures tenant / user / key / RP ID in the
+extension. Your page never holds those secrets.
 
-- **1 tenant** (with Tenant ID)
-- **1 default API key** (`sk_live_…`) — copy it during setup; it is shown once
+**Chat bridge:** the agent never holds the API key. The hosted bridge does.
 
-Developer plan limits: **100 attestations/month**, **1 tenant**, **unlimited
-reviewers**, 30-day audit history. Paid plans raise the attestation, tenant, and
-audit-history limits — see [pricing](https://sanctifai.com/trust/pricing).
+Register the Embedded origin + RP ID (`hostname` only, e.g. `app.example.com`)
+on the tenant allowlist, or presence calls are rejected. Console → Tenants →
+Manage for Tenant ID, keys, and origins. Don't guess or fabricate IDs.
 
-The attestation quota is counted per **calendar month in UTC** — it resets at
-`00:00 UTC` on the 1st, not on your signup/subscription anniversary. Track your
-own usage against that window if you meter against the plan.
+## Shared rules
 
-After signup, open **Console → Tenants → Manage** to create additional API keys or
-copy your Tenant ID. Store both values in your backend environment (`.env` /
-secret manager), not in client code or agent chat logs you don't trust.
+These apply on every surface. Don't restate them per flow.
 
-If the integrator already has credentials, write them into the backend at build
-time. If they don't, **direct them to trust.sanctifai.com** — do not guess or
-fabricate IDs.
+### Taxonomy
 
-> **Do not fall back to the Extension path just because you lack an API key.** A
-> missing key is not a reason to assume the worker will supply one. Obtain the
-> credentials via the Trust console (or ask the user for values they received
-> there) and build **embedded** — it is the default. Whatever origin runs the
-> attestation must be on the tenant's allowlist (see Hard rules / reference.md).
+`task_type` and `domain` are **fixed 3-letter codes** (enums). Descriptive
+strings are rejected. Put the human-readable title in `task_subtype` (≤ 200
+chars) and the detail inside `taskData` / `resultData` **before** hashing.
 
-## Step 2 — Pick the integration path (only if embedded is genuinely impossible)
-
-Ask exactly one question: **does the integrator control the app where the human
-works?**
-
-```
-        Does the integrator CONTROL the app where the human works?
-                                 │
-        ┌────────────────────────┴────────────────────────┐
-       YES — their own app / employees          NO — a 3rd-party app they don't
-        │                                         control, or external/BYO workforce
-        ▼                                              ▼
-   EMBEDDED (app-bound) ← DEFAULT                 EXTENSION (worker-bound)
-   • WebAuthn runs in THEIR page                 • WebAuthn runs in the worker's
-   • API key stays on THEIR backend                SanctifAI Chrome extension
-   • THEY supply user_id                          • the WORKER supplies identity
-   • REST API, no extension                       • one hosted <script>, no API key
-   (REST: /api/presence/*)                        (script: sanctifai-presence.js)
-```
-
-All three paths produce the same participation + certificate. **Default to embedded.**
-Choose Extension *only* when the humans are genuinely external / bring-your-own
-workforce, or the app is not controlled by the integrator — never merely because
-a credential is missing.
-
-**For AI agents:** When WebAuthn cannot run inside the chat (no browser context),
-use the **Chat bridge** (Step 3c) — you mint the request on the SanctifAI-hosted
-bridge, the human opens the approval link in Chrome, and you poll for the
-certificate. This is the third path and applies only to chat-based agents.
-
-## Taxonomy codes (hard rule — wrong values fail)
-
-`task_type` and `domain` are **fixed 3-letter taxonomy codes**, validated as
-enums. Descriptive strings are rejected.
-
-- **`task_type`** (required): one of
-  `ENT ANN COL RND EVA RPA ORC GEN MOD STT TRA DSN DEV CXO SLS CMP ANA PMT CUR`.
-  Default `GEN`.
-- **`domain`** (optional): one of
-  `GEN AUT DFS EDU ENE FIN INS HRM HOS LOG TRN LEG MED MDA RTL ROB SPT TEC GOV AGR REA TEL ESG`.
-  Default `GEN`.
-- **`task_subtype`** (optional): free-text label, **max 200 chars** — this is
-  where a human-readable description goes (it renders as the certificate title).
+- **`task_type`** (required): `ENT ANN COL RND EVA RPA ORC GEN MOD STT TRA DSN DEV CXO SLS CMP ANA PMT CUR`. Default `GEN`.
+- **`domain`** (optional): `GEN AUT DFS EDU ENE FIN INS HRM HOS LOG TRN LEG MED MDA RTL ROB SPT TEC GOV AGR REA TEL ESG`. Default `GEN`.
 
 ```txt
-# WRONG — descriptive label in a code field → rejected
+# WRONG
 task_type: "PHARMABOT_TREATMENT_REVIEW"
 
-# RIGHT — codes in the code fields, label in task_subtype, detail in taskData
+# RIGHT
 task_type:    "EVA"
 domain:       "MED"
 task_subtype: "Treatment plan review"
-# full details go inside taskData/resultData BEFORE hashing
 ```
 
-The full code lists with labels live in `reference.md`.
+Full labels: [reference.md](reference.md).
 
-## What's in an attestation record (and why you pass each field)
+### Privacy
 
-Trust splits data across three layers: **what you send at integration time**,
-**what SanctifAI stores** (participation database + public certificate), and
-**what is anchored on-chain** (Ethereum Attestation Service on Base). Raw
-`taskData` / `resultData` never leave the browser — only salted SHA-256
-commitments and selected metadata.
-
-### Fields you supply (`POST /api/presence/start` — embedded path)
-
-| Field | Public certificate | On-chain (EAS V3) | Trust DB | Why you pass it |
-|---|---|---|---|---|
-| `tenant_id` | Yes | No — **tenant commitment** only | Yes | Scopes the proof to your Trust tenant |
-| `user_id` | Yes | No | Yes | Binds the human reviewer — use an **opaque internal ID**, not PII |
-| `task_id` | Yes | No — **task commitment** only | Yes | Stable id for the unit of work / idempotency |
-| `task_type` | Yes (label) | No | Yes | 3-letter taxonomy — category of human work |
-| `domain` | Yes (label) | No | Yes | 3-letter industry/domain code |
-| `task_subtype` | Yes (headline) | No | Yes | Short certificate title — **no PII** |
-| `task_commitment` | Yes (hash) | Yes (`taskCommitment`) | Yes | Proves task payload without revealing it |
-| `result_commitment` | Yes (hash) | Yes (`resultCommitment`) | Yes | Proves outcome/decision without revealing it |
-| `human_fp` | Yes | Yes (`humanFingerprint`) | Yes | Pseudonymous WebAuthn / passkey fingerprint |
-| `bond_eligible` | Yes | Yes | Yes | Whether attestation may back a bond product |
-| `rp_id` / `origin` | RP ID on cert | No | Yes | Domain binding and allowlist enforcement |
-| `idempotency_key` | No | No | Yes | **Required** — UUID (`crypto.randomUUID()`) that de-dupes retries; add it on the backend. Missing/non-UUID → `400` |
-| `taskData` / `resultData` | **No** (hashed only) | **No** | **No** raw copy | Hashed client-side; plaintext never sent |
-
-Optional `customer_id` (UUID) may appear on the certificate if supplied — still
-must not contain or encode PII.
-
-### On-chain EAS attestation (V3 — public on Base)
-
-| On-chain field | Comes from | Purpose |
-|---|---|---|
-| `taskCommitment` | Client SHA-256 of task payload | Tamper-evident task binding without disclosure |
-| `humanFingerprint` | WebAuthn enrollment | Proves the same human authenticator signed |
-| `tenantCommitment` | Salted hash of `tenant_id` | Links proof to tenant without publishing the slug |
-| `resultCommitment` | Client SHA-256 of result payload | Tamper-evident outcome binding |
-| `ts` | Anchor time | When the proof was sealed |
-| `bondEligible` | Request flag | Bond-eligibility marker |
-
-Plain `tenant_id` and `task_id` strings are **not** written to chain in V3 — only
-their commitments (plus `humanFingerprint` and timestamps).
-
-### After `presence/verify` — what the integrator gets back
-
-| Field | Purpose |
-|---|---|
-| `participation_id` | Primary ID — certificate URL, QR, and API lookups |
-| `certificate_url` | Public proof page anyone can open and verify |
-| `qr_url` | QR seal image for your UI |
-| `verification_url` | EAS Scan / block explorer link when anchored |
-| `human_fp` | Reviewer's pseudonymous fingerprint (same as enrolled passkey) |
-
-### Privacy rule of thumb
-
-Treat the **certificate URL as public**. If you would not publish a value there,
-do not put it in `user_id`, `task_subtype`, `task_id`, or inside
-`taskData`/`resultData` (hashes are public; metadata above is shown on the cert).
-Store human-readable detail in your own systems; keep Trust payloads pseudonymous.
+The **certificate URL is public**. No PII in `user_id`, `task_subtype`,
+`task_id`, `taskData`, or `resultData`. Use opaque IDs (`emp_a8f3c2`, not
+`jane.doe@company.com`). Keep human-readable detail in your own system.
 
 ### After-the-fact proof
 
-Trust proves a **human participated** and binds SHA-256 commitments. It does
-**not** store or republish raw `taskData` / `resultData`. The certificate (and
-the on-chain EAS attestation, if used) carry the hashes — not the contents.
+Trust proves a human participated and binds SHA-256 commitments. It does **not**
+store raw `taskData` / `resultData`. To prove later *what* was attested:
 
-The **only** way to prove later *what* was in the participation is to:
-
-1. **Retain the exact payload** that was hashed at attest time (`taskData` and
-   `resultData` — the same value the hasher saw).
-2. **Present** that same data.
-3. **Re-hash** it with the same serialization used at mint/attest time.
-4. **Match** the digest to `task_commitment` / `result_commitment` on the
-   certificate (and to on-chain `taskCommitment` / `resultCommitment` if sealed).
-
-If you discard the payload, you still have proof a human showed up — **not**
-proof of the contents or context they attested over. `task_subtype` is only a
-short public headline (the certificate title), not the full record.
-
-**Canonicalization (embedded path in this skill):** objects are hashed as
-**key-sorted JSON**, then SHA-256, then `0x` + 64 hex — the `sha256Hex` helper
-in Step 3a:
+1. Retain the exact payload that was hashed.
+2. Re-hash it the same way: key-sorted JSON, then SHA-256, then `0x` + hex.
+3. Match `task_commitment` / `result_commitment` on the certificate.
 
 ```js
-// strings hashed as-is; objects: top-level keys sorted, then JSON.stringify
-JSON.stringify(payload, Object.keys(payload).sort())
+JSON.stringify(payload, Object.keys(payload).sort())  // then SHA-256 → 0x+hex
 ```
 
-A different key order, pretty-print, wrapping, or encoding will not match.
-Re-hash later with that same helper.
+A different key order or encoding will not match. Discard the payload and you
+still have proof a human showed up — not proof of contents. `task_subtype` is
+only the public headline.
 
-The **integrator keeps the system-of-record copy**. Trust makes that copy
-tamper-evident; it is not self-describing. Persist the payload next to
-`participation_id` / `certificate_url` in your own system.
+### Fields at a glance
 
-## Step 3a — Embedded (app-bound): call the REST API directly
+You send opaque IDs, taxonomy codes, a short `task_subtype`, and commitments.
+Success returns `participation_id`, `certificate_url`, and usually `qr_url`.
+Embedded also requires `idempotency_key` (UUID, generated on the backend).
+Full request/response and EAS V3 matrices: [reference.md](reference.md).
 
-The Trust API key must **never** reach the browser. Mint the presence session on
-the integrator's backend (it holds the key) and pass only the `session_id` to the
-page. `presence/options` and `presence/verify` are authorized by `session_id`, so
-the browser never needs the key.
+Never ship a Trust API key to client JavaScript. Embedded mints the session on
+your backend; Extension keeps the key in the worker's extension; Chat bridge
+holds it on the hosted service.
 
-### Embedded minimum flow (don't ship attestation-only)
+## Surface A — Embedded
 
-A complete embedded integration **enrolls the reviewer, then attests**:
+WebAuthn runs in **your** page. Mint the presence session on **your** backend
+(it holds the key) and pass only `session_id` to the browser.
 
-```txt
-1. Register the reviewer's passkey if they don't have one on this device
-   (POST /api/webauthn/registration/options + /verify — see reference.md).
-2. Start the presence session (backend; holds the API key).
-3. Fetch presence options.
-4. Prompt navigator.credentials.get().
-5. Verify the credential → participation.
-6. Display participation_id, certificate_url, and the qr_url QR image.
-```
+**Minimum flow:** enroll the reviewer's passkey if they don't have one on this
+device (`POST /api/webauthn/registration/options` + `/verify` — see
+[reference.md](reference.md)), then start → options → `navigator.credentials.get()`
+→ verify. If `presence/options` returns **404 No WebAuthn credentials found**,
+enroll once and retry.
 
-Skipping step 1 is the most common one-shot failure: for a reviewer who hasn't
-enrolled, `presence/options` returns **`404 No WebAuthn credentials found`**. Treat
-that 404 as the trigger to run enrollment inline (step 1), then retry the presence
-flow — no separate "is enrolled?" check needed.
+`registration/verify` needs `tenant_id`, `user_id`, `rp_id`, `challenge_id`,
+and `credential` including `clientExtensionResults`.
 
-> **`registration/verify` needs more than the credential.** Send `tenant_id`,
-> `user_id`, `rp_id`, and `challenge_id` **alongside** `credential` — and the
-> `credential` must include `clientExtensionResults`
-> (`cred.getClientExtensionResults?.() ?? {}`). Omitting any required field is a
-> `400`. Full enrollment example in [reference.md](reference.md).
-
-**Backend** (server-side; holds `TRUST_API_KEY`):
+**Backend** (holds `TRUST_API_KEY`):
 
 ```js
 // POST /api/trust/presence/start  — your server
 export async function POST(req) {
-  const body = await req.json();                 // commitments + task fields from the browser
-  const userId = await getEmployeeIdFromSession(req); // authorize from YOUR session, not the body
+  const body = await req.json();
+  const userId = await getEmployeeIdFromSession(req); // from YOUR session, not the body
   const r = await fetch('https://trust.sanctifai.com/api/presence/start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.TRUST_API_KEY}` },
@@ -284,10 +174,9 @@ export async function POST(req) {
 }
 ```
 
-**Browser** (runs WebAuthn; raw task data stays local):
+**Browser** (raw task data stays local):
 
 ```js
-// tiny helpers (WebAuthn needs base64url <-> ArrayBuffer)
 const b64uToBuf = (s) => { const p = s.replace(/-/g,'+').replace(/_/g,'/').padEnd(s.length+(4-s.length%4)%4,'='); const b = atob(p); const u = new Uint8Array(b.length); for (let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u.buffer; };
 const bufToB64u = (buf) => { const u = new Uint8Array(buf); let s=''; for (let i=0;i<u.length;i++) s+=String.fromCharCode(u[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
 const sha256Hex = async (d) => { const j = typeof d==='string'?d:JSON.stringify(d,Object.keys(d).sort()); const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(j)); return '0x'+Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join(''); };
@@ -295,35 +184,30 @@ const sha256Hex = async (d) => { const j = typeof d==='string'?d:JSON.stringify(
 const API = 'https://trust.sanctifai.com';
 
 async function createAttestation(taskData, resultData, { taskId, taskType='GEN', domain='GEN', taskSubtype } = {}) {
-  // 1. hash inputs locally — raw data never leaves the page
   const task_commitment = await sha256Hex(taskData);
   const result_commitment = await sha256Hex(resultData);
 
-  // 2. mint the session via YOUR backend (keeps the API key server-side)
   const { session_id } = await fetch('/api/trust/presence/start', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       task_id: taskId ?? `task-${Date.now()}`,
-      task_type: taskType, domain, task_subtype: taskSubtype, // codes only; label in task_subtype
+      task_type: taskType, domain, task_subtype: taskSubtype,
       task_commitment, result_commitment, bond_eligible: true,
       rp_id: location.hostname, origin: location.origin,
     }),
   }).then(r => r.json());
 
-  // 3. fetch WebAuthn options
   const { options } = await fetch(`${API}/api/presence/options`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id }),
   }).then(r => r.json());
 
-  // 4. prompt the platform authenticator
   const cred = await navigator.credentials.get({ publicKey: {
     ...options,
     challenge: b64uToBuf(options.challenge),
     allowCredentials: (options.allowCredentials || []).map(c => ({ ...c, id: b64uToBuf(c.id) })),
   }});
 
-  // 5. verify + create the participation
   return fetch(`${API}/api/presence/verify`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id, expedite: true, credential: {
@@ -340,64 +224,47 @@ async function createAttestation(taskData, resultData, { taskId, taskType='GEN',
 }
 ```
 
-Each reviewer must enroll a passkey **once per device** before attesting — see
-[reference.md](reference.md) (enrollment, the `Origin`-forwarding rule for
-proxied enrollment, and CORS/proxy notes).
+Enrollment, Origin-forwarding for proxied enroll, and CORS: [reference.md](reference.md).
 
-## Step 3b — Extension (worker-bound): one hosted script
+## Surface B — Extension
 
-The worker installs the SanctifAI Chrome extension and configures their **own**
-tenant id, user id, API key, and RP id. Your page includes only the hosted bridge
-script — it never holds per-worker secrets and supplies **no** `user_id`.
+The worker installs the SanctifAI Chrome extension and configures **their**
+tenant id, user id, API key, and RP id. Your page includes only the hosted
+script — no secrets, **no** `user_id` from the page. Identity is worker-bound
+and portable across the customers they work for.
 
 ```html
 <script src="https://trust.sanctifai.com/sanctifai-presence.js"></script>
 <script>
   await SanctifAIPresence.waitForReady(5000);
   const result = await SanctifAIPresence.createAttestation({
-    taskData: { item: 'POST-913', content: '…' }, // hashed client-side
-    resultData: { decision: 'approved' },          // hashed client-side
-    taskType: 'GEN', // optional, taxonomy code
+    taskData: { item: 'POST-913', content: '…' },
+    resultData: { decision: 'approved' },
+    taskType: 'GEN',
   });
   // result.participation_id, result.certificate_url, result.qr_url
 </script>
 ```
 
-The script exposes `createAttestation`, `detectExtension`, `isReady`,
-`waitForReady`, and `sha256Hex` on `window.SanctifAIPresence`. Identity comes from
-the worker's extension config, so the attestation binds to the **worker** and is
-portable across the customers they work for.
+`window.SanctifAIPresence` exposes `createAttestation`, `detectExtension`,
+`isReady`, `waitForReady`, and `sha256Hex`.
 
-## Step 3c — Chat bridge (for AI agents without a browser context)
+## Surface C — Chat bridge
 
-When an AI agent cannot run WebAuthn directly (no access to `navigator.credentials`
-inside a chat card), use the **SanctifAI-hosted Chat bridge** to mint an
-attestation request, present the approval link to a human, and poll for completion.
+For agents with no WebAuthn context. Default
+`APP_BASE_URL=https://bridge.trust.sanctifai.com`. Mint a request, the human
+opens `approve_url` in Chrome, you poll until `certificate_url`. Do not invent
+localhost approve links. Never request or print `TRUST_API_KEY`.
 
-**Default base URL:** `https://bridge.trust.sanctifai.com`
-
-The legacy host `https://trust-agent-c94n.onrender.com` may still exist
-temporarily. Default all new mint and poll traffic to
-`https://bridge.trust.sanctifai.com`.
-
-Customers can self-host the same plugin under their own `APP_BASE_URL` if they
-need a custom allowlisted origin, but the **product default is the
-SanctifAI-hosted bridge** — agents only mint and poll, never host the ceremony.
-
-### Chat bridge flow
+Self-host the plugin only if you need a custom allowlisted origin.
 
 ```
-1. Agent POSTs to {APP_BASE_URL}/api/v1/attestations
-   (passes task metadata; bridge mints the request)
-2. Agent gives the human the approve_url
-   (human opens it in Chrome and completes WebAuthn)
-3. Agent polls GET {APP_BASE_URL}/api/v1/attestations/{id}
+1. POST {APP_BASE_URL}/api/v1/attestations
+2. Human opens approve_url in Chrome (passkey)
+3. Poll GET {APP_BASE_URL}/api/v1/attestations/{id}
    or GET {APP_BASE_URL}/api/v1/attestations/{id}/wait
-4. When status is completed, agent retrieves certificate_url
-   (from trust.sanctifai.com — this is the portable proof)
+4. status=completed → certificate_url (hosted on trust.sanctifai.com)
 ```
-
-### 1. Create the attestation request
 
 **`POST {APP_BASE_URL}/api/v1/attestations`**
 
@@ -406,229 +273,39 @@ SanctifAI-hosted bridge** — agents only mint and poll, never host the ceremony
   "task_type": "GEN",
   "domain": "GEN",
   "task_subtype": "Chat approval",
+  "requesting_agent": "Support bot",
   "taskData": { "summary": "opaque task payload" },
   "resultData": { "decision": "approved" }
 }
 ```
 
-`task_type` and `domain` are the same **3-letter taxonomy codes** from the
-embedded flow (see Taxonomy codes). `task_subtype` is a short title (≤ 200 chars).
-**Do not put PII in any field** — the certificate URL is public.
+Optional `requesting_agent` (≤ 120 chars) is shown on the approve page.
+Empty/whitespace values are omitted.
 
-**Response:**
+**Response:** `{ attestation_id, approve_url, status: "pending" }`
 
-```json
-{
-  "attestation_id": "uuid",
-  "approve_url": "https://bridge.trust.sanctifai.com/approve?token=...",
-  "status": "pending"
-}
-```
+Tell the human: *Open this HTTPS link in Chrome and confirm with your device
+passkey: `{approve_url}`*. If they have no passkey on this origin, the page
+enrolls and retries.
 
-### 2. Human step (Chrome)
+**`GET …/wait`** blocks up to ~25s for a terminal status; if still `pending`,
+call it again.
 
-Present the `approve_url` to the human:
+**Done when:** `{ status: "completed", certificate_url: "https://trust.sanctifai.com/certificate/..." }`
 
-> Open this HTTPS link in Chrome and confirm with your device passkey:
-> `{approve_url}`
+Retain the exact `taskData` / `resultData` you posted (see Shared rules). The
+bridge approve client uses the same `sha256Hex` helper as Embedded.
 
-The approval page communicates with `https://trust.sanctifai.com` through the
-bridge plugin (`presence/start`, `presence/options`, `presence/verify`). If the
-reviewer has no enrolled credentials, the page enrolls a passkey on this origin
-and retries automatically.
+Shorter chat-only skill: https://bridge.trust.sanctifai.com/skill.md
 
-### 3. Poll for completion
+## Verify
 
-**`GET {APP_BASE_URL}/api/v1/attestations/{attestation_id}`**
-
-**`GET {APP_BASE_URL}/api/v1/attestations/{attestation_id}/wait`**
-
-The `/wait` endpoint blocks for up to ~25 seconds waiting for a terminal status
-(completed or failed). If the status is still `pending`, call `/wait` again.
-
-**Done when:**
-
-```json
-{
-  "attestation_id": "uuid",
-  "status": "completed",
-  "certificate_url": "https://trust.sanctifai.com/certificate/..."
-}
-```
-
-The `certificate_url` is the **portable proof** — paste it as the result. This
-URL is hosted on trust.sanctifai.com and is what immortalizes the attestation,
-not the chat log or the bridge-hosted approval page.
-
-### After-the-fact proof (Chat bridge)
-
-Trust proves a **human participated** and binds SHA-256 commitments. It does
-**not** store or republish the raw `taskData` / `resultData` you posted. The
-`certificate_url` is portable proof of presence, not a copy of the payload.
-
-The **only** way to prove later *what* was in the participation is to **retain
-the exact payload** you sent when minting (`taskData` / `resultData`), present
-that same data, **re-hash** it, and **match** `task_commitment` /
-`result_commitment` on the certificate (and on-chain if used). If you discard
-the payload, you still have proof a human showed up — **not** proof of contents
-or context. `task_subtype` is only a short public headline, not the full record.
-
-**Canonicalization:** re-hash with the **same serialization the bridge used
-when creating commitments**. The SanctifAI-hosted approve client stringifies
-objects with sorted keys (`JSON.stringify(payload, Object.keys(payload).sort())`)
-then SHA-256 (`0x` + 64 hex) — the same helper as this skill's embedded
-`sha256Hex`. If you self-host or the bridge changes, verify against that
-approve client; do not invent a different encoding.
-
-**You** keep the system-of-record copy (the objects you POSTed). Trust makes
-that copy tamper-evident; it is not self-describing. Persist the payload
-alongside `attestation_id` / `certificate_url`.
-
-### Chat bridge constraints
-
-- **Use `APP_BASE_URL` for every URL.** Do not invent `localhost` approve links.
-- **Never request or print `TRUST_API_KEY`.** The bridge holds it; the agent only
-  mints/polls.
-- **Keep payloads pseudonymous.** The certificate is public — no PII in
-  `task_subtype`, `taskData`, or `resultData`.
-- **Retain the exact `taskData` / `resultData` you posted.** Trust does not
-  store them. After-the-fact proof of contents is re-hash-and-match only
-  (see the subsection above).
-- **Agent mints the request; a named human on the customer's Trust tenant completes
-  WebAuthn.** The bridge session binds the request to the tenant; the human's
-  identity comes from their enrolled passkey.
-- **This is the product default path for chat-based agents.** Self-hosting the
-  plugin is optional and only needed when the customer requires a custom allowlisted
-  origin (the SanctifAI-hosted bridge already works for any tenant on
-  trust.sanctifai.com).
-
-## Hard rules
-
-1. **Default to embedded; obtain credentials, don't dodge to the extension.**
-   Embedded needs `TRUST_TENANT_ID` + `TRUST_API_KEY` on the backend — have them
-   or prompt the user. A missing key is never a reason to pick the extension.
-2. **Target production** `https://trust.sanctifai.com`. A local Trust site is docs
-   only unless confirmed to run the full API with your tenant allowlist.
-3. **Never ship a Trust API key to client JavaScript.** Embedded → mint the
-   session on the backend. Extension → the key lives in the worker's extension.
-4. **`task_type` / `domain` are fixed 3-letter codes** (see Taxonomy codes).
-   Descriptive labels go in `task_subtype` (≤ 200 chars) or inside
-   `taskData`/`resultData` before hashing — never in a code field.
-5. **`taskData` / `resultData` stay raw on the client** — they are hashed into
-   `0x`+SHA-256 commitments; only hashes are transmitted.
-6. **No PII on the public certificate.** Fields that can appear on the certificate
-   or proof URL — especially `task_subtype`, labels inside `taskData`/`resultData`,
-   and any display metadata — must **not** contain personally identifiable
-   information (names, emails, phone numbers, account numbers, government IDs,
-   full addresses, etc.). Use opaque internal IDs for `user_id` (e.g.
-   `emp_a8f3c2`, not `jane.doe@company.com`). The Tenant ID is already scoped to
-   the integrator; do not embed customer PII in tenant-facing attestation payloads.
-   Put human-readable detail in your own app/database; keep Trust payloads
-   pseudonymous.
-7. **Register production origin(s) + RP ID** with the tenant, or the API's
-   allowlist rejects the domain.
-8. **`rp_id` is the hostname only** (e.g. `app.example.com`, or `localhost` in dev).
-9. **The attestation step runs in a browser** (it calls `navigator.credentials`).
-
-## Before you ask the user to test (smoke test)
-
-Sanity-check the wiring **without** completing a real attestation:
-
-```txt
-- POST /api/webauthn/registration/options  → returns challenge_id + options
-- POST /api/presence/start                  → returns session_id
-- POST /api/presence/options                → returns options.challenge
-```
-
-If any of these returns HTML, a 401/403, or a CORS error, fix the base URL, API
-key, or origin allowlist **before** going further — don't prompt the user yet.
-
-A **`400` is not a credential verdict.** Auth is checked only after the body
-validates, so a bogus key with an invalid body returns the same `400` as a real
-key with an invalid body. Confirm the key with a valid body: `valid body + real
-key → 200`, `valid body + bogus key → 401`. You haven't verified the key until
-you've seen the `200`. (And a `307 → /login` means the base URL is right but the
-**path** is wrong — see reference.md troubleshooting.)
-
-## UI acceptance criteria
-
-A complete UI shows, after a successful attestation:
-
-```txt
-- participation_id
-- certificate_url  (clickable link — open it to confirm the public proof renders)
-- qr_url           (rendered as a QR image, not just a link)
-- verification_url (if present — the on-chain explorer link)
-- clear error guidance when the reviewer has not enrolled a passkey
-```
-
-## Verify it worked
-
-A successful call returns JSON with a non-empty `participation_id` and a
-`certificate_url`. Open the `certificate_url` to confirm the public proof renders.
+Success is a non-empty `participation_id` + `certificate_url` (Chat bridge:
+`status=completed` + `certificate_url`). Open the cert. Show `qr_url` if you
+have a UI.
 
 ## Deeper material
 
-- [reference.md](reference.md) — REST endpoints, full taxonomy code lists,
-  obtaining credentials, one-time passkey enrollment, the `Origin`-forwarding rule
-  for proxied enrollment, error/troubleshooting tables, CORS/same-origin-proxy
-  guidance, response shapes.
-- Docs: https://trust.sanctifai.com
-
-## Changelog
-
-This skill shares one version with [`reference.md`](reference.md). Record which
-version you built against; a version mismatch between the published copy and a
-mirror means one is stale.
-
-- **1.7.0 — 2026-09-07.** Chat bridge default `APP_BASE_URL` cut over to
-  `https://bridge.trust.sanctifai.com`. New mint/poll traffic uses the canonical
-  host. The legacy Render host `trust-agent-c94n.onrender.com` may still exist
-  temporarily. Trust API base remains `https://trust.sanctifai.com`.
-  `reference.md` unchanged except lockstep version.
-- **1.6.0 — 2026-09-07.** Chat bridge host cutover note: working default remains
-  `https://trust-agent-c94n.onrender.com`; canonical host after DNS will be
-  `https://bridge.trust.sanctifai.com`. Bridge source now lives in the Trust
-  monorepo (`apps/chat-bridge` + `plugins/sanctifai-trust`). No API contract
-  change. `reference.md` unchanged except lockstep version.
-- **1.5.0 — 2026-09-07.** Added **After-the-fact proof**: Trust binds SHA-256
-  commitments and does **not** store or republish raw task/result contents.
-  Integrators must retain the exact payload hashed at attest time, re-hash with
-  the same canonicalization (key-sorted JSON then SHA-256 for the embedded path
-  and the Chat bridge approve client), and match `task_commitment` /
-  `result_commitment` on the certificate (and on-chain if used). Discarding the
-  payload leaves proof a human showed up, not proof of contents. `task_subtype`
-  is a short public headline, not the full record. Restated inside **Step 3c**
-  so agents that only read the Chat bridge cannot miss it. `reference.md`
-  unchanged; version kept in lockstep.
-- **1.4.0 — 2026-09-07.** Added **Step 3c — Chat bridge** for AI agents that
-  cannot run WebAuthn inside a chat card. Documents the SanctifAI-hosted bridge
-  (`https://trust-agent-c94n.onrender.com`) for mint-and-poll flow: agent creates
-  attestation request, human opens `approve_url` in Chrome, agent polls for
-  `certificate_url`. Clarified that Chat bridge is the product default path for
-  chat-based agents; self-hosting is optional. Updated Step 2 diagram note to
-  reference all three paths. `reference.md` unchanged; version kept in lockstep.
-- **1.3.1 — 2026-08-17.** Corrected the signup section: there is **no free
-  trial**. The **Developer** plan is free forever (100 attestations/month, 1
-  tenant, unlimited reviewers, 30-day audit history); the previously documented
-  "7-day trial" and its "10 users" limit never existed. Added a pointer to the
-  pricing page. `reference.md` unchanged; version kept in lockstep.
-- **1.3.0 — 2026-08-15.** No change to this skill's guidance; `reference.md`
-  gained the `excludeCredentials`-now-populated note and a consistent error
-  envelope (`code` + `error` on every family). Version kept in lockstep.
-- **1.2.0 — 2026-08-14.** No change to this skill's guidance; `reference.md`
-  gained the `GET /api/v1/participations` **list** endpoint, the per-tenant
-  **rate-limit contract**, the v1 read error shape, an advanced-`POST`-create
-  note, and a `bond_eligible` default fix. The former internal `docs/api/*`
-  reference was retired in favour of `reference.md` as the single published
-  contract. Version bumped to keep the set in lockstep.
-- **1.1.0 — 2026-08-14.** Reset window stated (calendar month, UTC). Smoke-test
-  note that a `400` is not a credential verdict (real-key/bogus-key pair) and the
-  `307 → /login` path hint. Full detail — the `GET /api/v1/participations` read
-  endpoints, Origin-allowlist validation in the proxy, the two error-envelope
-  shapes, `display_name`/QR/`excludeCredentials` clarifications — landed in
-  `reference.md` at the same version.
-- **1.0.0 — 2026-08-11.** Baseline after TRU-85: `idempotency_key` required (UUID,
-  backend-generated); full `registration/verify` body incl.
-  `clientExtensionResults`; `404 No WebAuthn credentials found` attributed to
-  `presence/options` as the enrollment trigger.
+- [reference.md](reference.md) — REST endpoints, taxonomy labels, enrollment, CORS, errors
+- Product: https://trust.sanctifai.com
+- Chat bridge skill: https://bridge.trust.sanctifai.com/skill.md
