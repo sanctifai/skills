@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.5.0
+version: 1.6.0
 updated: 2026-09-07
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.5.0 · Last updated 2026-09-07.** This skill and its
+**Version 1.6.0 · Last updated 2026-09-07.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -374,11 +374,18 @@ When an AI agent cannot run WebAuthn directly (no access to `navigator.credentia
 inside a chat card), use the **SanctifAI-hosted Chat bridge** to mint an
 attestation request, present the approval link to a human, and poll for completion.
 
-**Default base URL:** `https://trust-agent-c94n.onrender.com` (the current
-SanctifAI-hosted bridge; may be assigned a stable public name later). Customers
-can self-host the same plugin under their own `APP_BASE_URL` if they need a
-custom allowlisted origin, but the **product default is the SanctifAI-hosted
-bridge** — agents only mint and poll, never host the ceremony.
+**Default base URL (live):** `https://trust-agent-c94n.onrender.com`
+
+> **CUTOVER (not live yet):** the production canonical host will be
+> `https://bridge.trust.sanctifai.com` after DNS is pointed at the
+> `trust-chat-bridge` Render service (code now lives in this monorepo at
+> `apps/chat-bridge`). Keep using the c94n URL until that cutover. Do **not**
+> switch agents to `bridge.trust.sanctifai.com` until DNS and `APP_BASE_URL`
+> are confirmed live.
+
+Customers can self-host the same plugin under their own `APP_BASE_URL` if they
+need a custom allowlisted origin, but the **product default is the
+SanctifAI-hosted bridge** — agents only mint and poll, never host the ceremony.
 
 ### Chat bridge flow
 
@@ -577,6 +584,11 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
+- **1.6.0 — 2026-09-07.** Chat bridge host cutover note: working default remains
+  `https://trust-agent-c94n.onrender.com`; canonical host after DNS will be
+  `https://bridge.trust.sanctifai.com`. Bridge source now lives in the Trust
+  monorepo (`apps/chat-bridge` + `plugins/sanctifai-trust`). No API contract
+  change. `reference.md` unchanged except lockstep version.
 - **1.5.0 — 2026-09-07.** Added **After-the-fact proof**: Trust binds SHA-256
   commitments and does **not** store or republish raw task/result contents.
   Integrators must retain the exact payload hashed at attest time, re-hash with
