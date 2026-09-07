@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.3.1
-updated: 2026-08-17
+version: 1.4.0
+updated: 2026-09-07
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.3.1 · Last updated 2026-08-17.** This skill and its
+**Version 1.4.0 · Last updated 2026-09-07.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -98,10 +98,15 @@ works?**
    (REST: /api/presence/*)                        (script: sanctifai-presence.js)
 ```
 
-Both paths produce the same participation + certificate. **Default to embedded.**
+All three paths produce the same participation + certificate. **Default to embedded.**
 Choose Extension *only* when the humans are genuinely external / bring-your-own
 workforce, or the app is not controlled by the integrator — never merely because
 a credential is missing.
+
+**For AI agents:** When WebAuthn cannot run inside the chat (no browser context),
+use the **Chat bridge** (Step 3c) — you mint the request on the SanctifAI-hosted
+bridge, the human opens the approval link in Chrome, and you poll for the
+certificate. This is the third path and applies only to chat-based agents.
 
 ## Taxonomy codes (hard rule — wrong values fail)
 
@@ -328,6 +333,109 @@ The script exposes `createAttestation`, `detectExtension`, `isReady`,
 the worker's extension config, so the attestation binds to the **worker** and is
 portable across the customers they work for.
 
+## Step 3c — Chat bridge (for AI agents without a browser context)
+
+When an AI agent cannot run WebAuthn directly (no access to `navigator.credentials`
+inside a chat card), use the **SanctifAI-hosted Chat bridge** to mint an
+attestation request, present the approval link to a human, and poll for completion.
+
+**Default base URL:** `https://trust-agent-c94n.onrender.com` (the current
+SanctifAI-hosted bridge; may be assigned a stable public name later). Customers
+can self-host the same plugin under their own `APP_BASE_URL` if they need a
+custom allowlisted origin, but the **product default is the SanctifAI-hosted
+bridge** — agents only mint and poll, never host the ceremony.
+
+### Chat bridge flow
+
+```
+1. Agent POSTs to {APP_BASE_URL}/api/v1/attestations
+   (passes task metadata; bridge mints the request)
+2. Agent gives the human the approve_url
+   (human opens it in Chrome and completes WebAuthn)
+3. Agent polls GET {APP_BASE_URL}/api/v1/attestations/{id}
+   or GET {APP_BASE_URL}/api/v1/attestations/{id}/wait
+4. When status is completed, agent retrieves certificate_url
+   (from trust.sanctifai.com — this is the portable proof)
+```
+
+### 1. Create the attestation request
+
+**`POST {APP_BASE_URL}/api/v1/attestations`**
+
+```json
+{
+  "task_type": "GEN",
+  "domain": "GEN",
+  "task_subtype": "Chat approval",
+  "taskData": { "summary": "opaque task payload" },
+  "resultData": { "decision": "approved" }
+}
+```
+
+`task_type` and `domain` are the same **3-letter taxonomy codes** from the
+embedded flow (see Taxonomy codes). `task_subtype` is a short title (≤ 200 chars).
+**Do not put PII in any field** — the certificate URL is public.
+
+**Response:**
+
+```json
+{
+  "attestation_id": "uuid",
+  "approve_url": "https://trust-agent-c94n.onrender.com/approve?token=...",
+  "status": "pending"
+}
+```
+
+### 2. Human step (Chrome)
+
+Present the `approve_url` to the human:
+
+> Open this HTTPS link in Chrome and confirm with your device passkey:
+> `{approve_url}`
+
+The approval page communicates with `https://trust.sanctifai.com` through the
+bridge plugin (`presence/start`, `presence/options`, `presence/verify`). If the
+reviewer has no enrolled credentials, the page enrolls a passkey on this origin
+and retries automatically.
+
+### 3. Poll for completion
+
+**`GET {APP_BASE_URL}/api/v1/attestations/{attestation_id}`**
+
+**`GET {APP_BASE_URL}/api/v1/attestations/{attestation_id}/wait`**
+
+The `/wait` endpoint blocks for up to ~25 seconds waiting for a terminal status
+(completed or failed). If the status is still `pending`, call `/wait` again.
+
+**Done when:**
+
+```json
+{
+  "attestation_id": "uuid",
+  "status": "completed",
+  "certificate_url": "https://trust.sanctifai.com/certificate/..."
+}
+```
+
+The `certificate_url` is the **portable proof** — paste it as the result. This
+URL is hosted on trust.sanctifai.com and is what immortalizes the attestation,
+not the chat log or the bridge-hosted approval page.
+
+### Chat bridge constraints
+
+- **Use `APP_BASE_URL` for every URL.** Do not invent `localhost` approve links.
+- **Never request or print `TRUST_API_KEY`.** The bridge holds it; the agent only
+  mints/polls.
+- **Keep payloads pseudonymous.** The certificate is public — no PII in
+  `task_subtype`, `taskData`, or `resultData`.
+- **Agent mints the request; a named human on the customer's Trust tenant completes
+  WebAuthn.** The bridge session binds the request to the tenant; the human's
+  identity comes from their enrolled passkey.
+- **This is the product default path for chat-based agents.** Self-hosting the
+  plugin is optional and only needed when the customer requires a custom allowlisted
+  origin (the SanctifAI-hosted bridge already works for any tenant on
+  trust.sanctifai.com).
+
 ## Hard rules
 
 1. **Default to embedded; obtain credentials, don't dodge to the extension.**
@@ -407,6 +515,13 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
+- **1.4.0 — 2026-09-07.** Added **Step 3c — Chat bridge** for AI agents that
+  cannot run WebAuthn inside a chat card. Documents the SanctifAI-hosted bridge
+  (`https://trust-agent-c94n.onrender.com`) for mint-and-poll flow: agent creates
+  attestation request, human opens `approve_url` in Chrome, agent polls for
+  `certificate_url`. Clarified that Chat bridge is the product default path for
+  chat-based agents; self-hosting is optional. Updated Step 2 diagram note to
+  reference all three paths. `reference.md` unchanged; version kept in lockstep.
 - **1.3.1 — 2026-08-17.** Corrected the signup section: there is **no free
   trial**. The **Developer** plan is free forever (100 attestations/month, 1
   tenant, unlimited reviewers, 30-day audit history); the previously documented
