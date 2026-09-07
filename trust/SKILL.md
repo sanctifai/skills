@@ -2,13 +2,13 @@
 name: sanctifai-trust-proof-of-human
 description: Integrate SanctifAI Trust Proof-of-Human attestations. Use when an app needs cryptographic proof a human performed a task or human-in-the-loop verification.
 homepage: https://trust.sanctifai.com
-version: 1.4.0
+version: 1.5.0
 updated: 2026-09-07
 ---
 
 # SanctifAI Trust — Proof of Human
 
-**Version 1.4.0 · Last updated 2026-09-07.** This skill and its
+**Version 1.5.0 · Last updated 2026-09-07.** This skill and its
 [`reference.md`](reference.md) share one version; the [changelog](#changelog) is
 at the end. If a copy of this file (e.g. an external mirror) shows a different
 version, the lower one is stale.
@@ -194,6 +194,41 @@ Treat the **certificate URL as public**. If you would not publish a value there,
 do not put it in `user_id`, `task_subtype`, `task_id`, or inside
 `taskData`/`resultData` (hashes are public; metadata above is shown on the cert).
 Store human-readable detail in your own systems; keep Trust payloads pseudonymous.
+
+### After-the-fact proof
+
+Trust proves a **human participated** and binds SHA-256 commitments. It does
+**not** store or republish raw `taskData` / `resultData`. The certificate (and
+the on-chain EAS attestation, if used) carry the hashes — not the contents.
+
+The **only** way to prove later *what* was in the participation is to:
+
+1. **Retain the exact payload** that was hashed at attest time (`taskData` and
+   `resultData` — the same value the hasher saw).
+2. **Present** that same data.
+3. **Re-hash** it with the same serialization used at mint/attest time.
+4. **Match** the digest to `task_commitment` / `result_commitment` on the
+   certificate (and to on-chain `taskCommitment` / `resultCommitment` if sealed).
+
+If you discard the payload, you still have proof a human showed up — **not**
+proof of the contents or context they attested over. `task_subtype` is only a
+short public headline (the certificate title), not the full record.
+
+**Canonicalization (embedded path in this skill):** objects are hashed as
+**key-sorted JSON**, then SHA-256, then `0x` + 64 hex — the `sha256Hex` helper
+in Step 3a:
+
+```js
+// strings hashed as-is; objects: top-level keys sorted, then JSON.stringify
+JSON.stringify(payload, Object.keys(payload).sort())
+```
+
+A different key order, pretty-print, wrapping, or encoding will not match.
+Re-hash later with that same helper.
+
+The **integrator keeps the system-of-record copy**. Trust makes that copy
+tamper-evident; it is not self-describing. Persist the payload next to
+`participation_id` / `certificate_url` in your own system.
 
 ## Step 3a — Embedded (app-bound): call the REST API directly
 
@@ -421,6 +456,30 @@ The `certificate_url` is the **portable proof** — paste it as the result. This
 URL is hosted on trust.sanctifai.com and is what immortalizes the attestation,
 not the chat log or the bridge-hosted approval page.
 
+### After-the-fact proof (Chat bridge)
+
+Trust proves a **human participated** and binds SHA-256 commitments. It does
+**not** store or republish the raw `taskData` / `resultData` you posted. The
+`certificate_url` is portable proof of presence, not a copy of the payload.
+
+The **only** way to prove later *what* was in the participation is to **retain
+the exact payload** you sent when minting (`taskData` / `resultData`), present
+that same data, **re-hash** it, and **match** `task_commitment` /
+`result_commitment` on the certificate (and on-chain if used). If you discard
+the payload, you still have proof a human showed up — **not** proof of contents
+or context. `task_subtype` is only a short public headline, not the full record.
+
+**Canonicalization:** re-hash with the **same serialization the bridge used
+when creating commitments**. The SanctifAI-hosted approve client stringifies
+objects with sorted keys (`JSON.stringify(payload, Object.keys(payload).sort())`)
+then SHA-256 (`0x` + 64 hex) — the same helper as this skill's embedded
+`sha256Hex`. If you self-host or the bridge changes, verify against that
+approve client; do not invent a different encoding.
+
+**You** keep the system-of-record copy (the objects you POSTed). Trust makes
+that copy tamper-evident; it is not self-describing. Persist the payload
+alongside `attestation_id` / `certificate_url`.
+
 ### Chat bridge constraints
 
 - **Use `APP_BASE_URL` for every URL.** Do not invent `localhost` approve links.
@@ -428,6 +487,9 @@ not the chat log or the bridge-hosted approval page.
   mints/polls.
 - **Keep payloads pseudonymous.** The certificate is public — no PII in
   `task_subtype`, `taskData`, or `resultData`.
+- **Retain the exact `taskData` / `resultData` you posted.** Trust does not
+  store them. After-the-fact proof of contents is re-hash-and-match only
+  (see the subsection above).
 - **Agent mints the request; a named human on the customer's Trust tenant completes
   WebAuthn.** The bridge session binds the request to the tenant; the human's
   identity comes from their enrolled passkey.
@@ -515,6 +577,16 @@ This skill shares one version with [`reference.md`](reference.md). Record which
 version you built against; a version mismatch between the published copy and a
 mirror means one is stale.
 
+- **1.5.0 — 2026-09-07.** Added **After-the-fact proof**: Trust binds SHA-256
+  commitments and does **not** store or republish raw task/result contents.
+  Integrators must retain the exact payload hashed at attest time, re-hash with
+  the same canonicalization (key-sorted JSON then SHA-256 for the embedded path
+  and the Chat bridge approve client), and match `task_commitment` /
+  `result_commitment` on the certificate (and on-chain if used). Discarding the
+  payload leaves proof a human showed up, not proof of contents. `task_subtype`
+  is a short public headline, not the full record. Restated inside **Step 3c**
+  so agents that only read the Chat bridge cannot miss it. `reference.md`
+  unchanged; version kept in lockstep.
 - **1.4.0 — 2026-09-07.** Added **Step 3c — Chat bridge** for AI agents that
   cannot run WebAuthn inside a chat card. Documents the SanctifAI-hosted bridge
   (`https://trust-agent-c94n.onrender.com`) for mint-and-poll flow: agent creates
