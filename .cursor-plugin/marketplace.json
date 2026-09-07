@@ -1,0 +1,18 @@
+{
+  "name": "sanctifai-skills",
+  "owner": {
+    "name": "SanctifAI",
+    "email": "support@sanctifai.com"
+  },
+  "metadata": {
+    "description": "Public SanctifAI agent plugins. Trust (Chat bridge Proof of Human) is listed now; a Source sibling may be added later.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "sanctifai-trust",
+      "source": "./plugins/sanctifai-trust",
+      "description": "Chat bridge Proof of Human for AI agents — mint an attestation, a human confirms in Chrome, poll for certificate_url."
+    }
+  ]
+}
