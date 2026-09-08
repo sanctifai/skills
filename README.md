@@ -20,15 +20,15 @@ Keep folder names `source/` and `trust/` and filenames `SKILL.md` (uppercase). C
 >
 > `plugins/sanctifai-trust/` is the public plugin package (not an auto-sync product skill). The Chat bridge **runtime** stays in private `sanctifai/sanctifai-trust` (`apps/chat-bridge`) at `https://bridge.trust.sanctifai.com`.
 
-## Canonical URLs
+## Canonical URLs (source of truth)
 
-Agents fetching HTTP should use the **web** URL (live source of truth). This GitHub repo is the copy marketplace crawlers scan.
+Agents fetching HTTP should use the **web** URL. This GitHub repo is the copy marketplace crawlers scan. Do **not** hand-edit the mirrored files — change the SoT file in the product repo instead.
 
-| Product | Web (live SoT for agents fetching HTTP) | This repo (marketplace crawlers) |
-|---------|------------------------------------------|------------------------------------|
-| **Source** | https://app.sanctifai.com/agents/source/skill.md | [`source/SKILL.md`](./source/SKILL.md) |
-| **Trust** (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | [`trust/SKILL.md`](./trust/SKILL.md) |
-| **Trust** chat-bridge plugin | (bundled) | [`plugins/sanctifai-trust/skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md) |
+| Product | Web (live SoT) | This repo | SoT file (writer) |
+|---------|----------------|-----------|--------------------|
+| **Source** | https://app.sanctifai.com/agents/source/skill.md | [`source/SKILL.md`](./source/SKILL.md) | `docs/skill.md` in app.sanctifai.com |
+| **Trust** (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | [`trust/SKILL.md`](./trust/SKILL.md) | `apps/web/public/agents/trust/skill.md` in sanctifai-trust |
+| **Trust** chat-bridge plugin | (bundled) | [`plugins/sanctifai-trust/skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md) | this repo (`plugins/sanctifai-trust/`) |
 
 Compatibility aliases still exist on the product hosts (`/agents/skill.md`, `/agent-skill.md`, `/skill.md`). Prefer `/agents/{product}/skill.md`.
 
@@ -36,10 +36,10 @@ See [SYNC.md](./SYNC.md) for who writes what and on which push.
 
 ## Skills (auto-mirrored)
 
-| Skill | File | What it does | Written in (do not edit here) |
-|-------|------|--------------|-------------------------------|
-| **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP | `docs/skill.md` in app.sanctifai.com → live at [app.sanctifai.com/agents/source/skill.md](https://app.sanctifai.com/agents/source/skill.md) |
-| **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates | `apps/web/public/agents/trust/skill.md` in sanctifai-trust → live at [trust.sanctifai.com/agents/trust/skill.md](https://trust.sanctifai.com/agents/trust/skill.md) |
+| Skill | File | What it does |
+|-------|------|--------------|
+| **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP |
+| **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates |
 
 > Each product skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md) or the live Source URL above.
 

@@ -6,11 +6,11 @@ Do **not** hand-edit `source/SKILL.md` or `trust/SKILL.md`. Keep those folder na
 
 ## Canonical map
 
-| Product | Web (live SoT for agents fetching HTTP) | This repo (marketplace crawlers) |
-|---------|------------------------------------------|------------------------------------|
-| Source | https://app.sanctifai.com/agents/source/skill.md | `source/SKILL.md` |
-| Trust (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | `trust/SKILL.md` |
-| Trust chat-bridge plugin | (bundled) | `plugins/sanctifai-trust/skills/proof-of-human/SKILL.md` |
+| Product | Web (live SoT) | This repo | SoT file (writer) |
+|---------|----------------|-----------|--------------------|
+| Source | https://app.sanctifai.com/agents/source/skill.md | `source/SKILL.md` | `docs/skill.md` in app.sanctifai.com |
+| Trust (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | `trust/SKILL.md` | `apps/web/public/agents/trust/skill.md` in sanctifai-trust |
+| Trust chat-bridge plugin | (bundled) | `plugins/sanctifai-trust/skills/proof-of-human/SKILL.md` | this repo |
 
 Compatibility aliases still exist on the apps (`/agents/skill.md`, `/agent-skill.md`, `/skill.md` on the product hosts). Prefer `/agents/{product}/skill.md`.
 
