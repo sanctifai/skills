@@ -9,6 +9,7 @@
   },
   "homepage": "https://trust.sanctifai.com",
   "repository": "https://github.com/sanctifai/skills",
+  "license": "Apache-2.0",
   "keywords": [
     "proof-of-human",
     "webauthn",

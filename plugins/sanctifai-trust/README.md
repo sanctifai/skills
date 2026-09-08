@@ -8,7 +8,7 @@ The agent cannot run WebAuthn in-card. This plugin teaches it to mint an attesta
 **Default `APP_BASE_URL`:** `https://bridge.trust.sanctifai.com`
 **Live skill:** [https://bridge.trust.sanctifai.com/skill.md](https://bridge.trust.sanctifai.com/skill.md)
 
-The Chat bridge **runtime** stays in the private `sanctifai/sanctifai-trust` monorepo (`apps/chat-bridge`). This directory is **packaging only** — public so the plugin can later be submitted to the Cursor marketplace. Do not point agents at legacy hosts such as `trust-agent-c94n`.
+The Chat bridge **runtime** stays in the private `sanctifai/sanctifai-trust` monorepo (`apps/chat-bridge`). This directory is **packaging only**. Do not point agents at legacy hosts such as `trust-agent-c94n`.
 
 This plugin is **not** the product-wide Trust skill (`trust/SKILL.md` in this repo), which covers Embedded + Extension + Chat bridge. Use that file when integrating Trust into an app you control. Use **this** plugin when the human is in a chat / agent session with no browser WebAuthn context.
 
@@ -35,7 +35,11 @@ Local Cursor test: copy this folder to `~/.cursor/plugins/local/sanctifai-trust`
 
 Claude Code / Codex: install from this plugin directory (each harness reads its own `.*-plugin/plugin.json`). Skills resolve from `./skills`.
 
-This package is **not** on the public Cursor Marketplace yet. Marketplace submit is a follow-up; do not treat this README as a published listing.
+This package is **not** on the public Cursor Marketplace and is **not** being submitted there. Do not treat this README as a published listing.
+
+## License
+
+Apache License 2.0 — see the repo root [`LICENSE`](../../LICENSE) and [`NOTICE`](../../NOTICE). Apache-2.0 covers this skills/plugin packaging only; it does not grant trademark rights and does not license the Trust SaaS/service or private bridge runtime.
 
 ## Usage
 

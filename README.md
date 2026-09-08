@@ -30,9 +30,13 @@ sanctifai/skills
 
 This repo is a **multi-plugin marketplace** layout (`.cursor-plugin/marketplace.json`). Only Trust is listed today. A **Source** sibling plugin may be added later in `plugins/` and registered in the same marketplace file — do not add a placeholder entry until that package exists.
 
-**Marketplace submit is the intended next step and is not done from this change.** Do not publish to [cursor.com/marketplace](https://cursor.com/marketplace/publish) until Nate reviews this package.
-
 Cursor reads `.cursor-plugin/marketplace.json` (not a root `marketplace.json`). Plugin identity lives in `plugins/sanctifai-trust/.cursor-plugin/plugin.json` plus the portable `plugin.json` / `.claude-plugin/` / `.codex-plugin/` manifests.
+
+This repository is **not** submitted to the public [Cursor Marketplace](https://cursor.com/marketplace). Do not publish it there.
+
+## License
+
+This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright 2026 SanctifAI). See [NOTICE](./NOTICE) for trademarks (“SanctifAI,” “Trust,” and related marks) and for license **scope**: Apache-2.0 covers this skills/plugin packaging repo only. It does **not** grant trademark rights, and it does **not** license the Trust SaaS/service or proprietary product/runtime code (the Chat bridge runtime stays private).
 
 ---
 
