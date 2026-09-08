@@ -39,7 +39,7 @@ This package is **not** on the public Cursor Marketplace and is **not** being su
 
 ## License
 
-Apache License 2.0 — see the repo root [`LICENSE`](../../LICENSE) and [`NOTICE`](../../NOTICE). Apache-2.0 covers this skills/plugin packaging only; it does not grant trademark rights and does not license the Trust SaaS/service or private bridge runtime.
+Apache License 2.0 — see the repo root [`LICENSE`](../../LICENSE) and [`NOTICE`](../../NOTICE). Apache-2.0 covers this skills/plugin packaging only; it does not grant trademark rights, does not grant patents beyond Apache-2.0 §3, and does not license the Trust SaaS/service or private bridge runtime.
 
 ## Usage
 
