@@ -36,7 +36,7 @@ This repository is **not** submitted to the public [Cursor Marketplace](https://
 
 ## License
 
-This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright 2026 SanctifAI). See [NOTICE](./NOTICE) for trademarks (“SanctifAI,” “Trust,” and related marks) and for license **scope**: Apache-2.0 covers this skills/plugin packaging repo only. It does **not** grant trademark rights, and it does **not** license the Trust SaaS/service or proprietary product/runtime code (the Chat bridge runtime stays private).
+This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright 2026 SanctifAI). See [NOTICE](./NOTICE) for trademarks, patent reservation (including App. 63/926,453), and license **scope**: Apache-2.0 covers this skills/plugin packaging repo only. It does **not** grant trademark rights, it does **not** grant patents beyond Apache-2.0 §3, and it does **not** license the Trust SaaS/service or proprietary product/runtime code (the Chat bridge runtime stays private).
 
 ---
 
