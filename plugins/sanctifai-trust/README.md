@@ -10,7 +10,7 @@ The agent cannot run WebAuthn in-card. This plugin teaches it to mint an attesta
 
 The Chat bridge **runtime** stays in the private `sanctifai/sanctifai-trust` monorepo (`apps/chat-bridge`). This directory is **packaging only**. Do not point agents at legacy hosts such as `trust-agent-c94n`.
 
-This plugin is **not** the product-wide Trust skill (`trust/SKILL.md` in this repo), which covers Embedded + Extension + Chat bridge. Use that file when integrating Trust into an app you control. Use **this** plugin when the human is in a chat / agent session with no browser WebAuthn context.
+This plugin is **not** the product-wide Trust skill ([`trust/SKILL.md`](../../trust/SKILL.md), live at [trust.sanctifai.com/agents/trust/skill.md](https://trust.sanctifai.com/agents/trust/skill.md)), which covers Embedded + Extension + Chat bridge. Use that file when integrating Trust into an app you control. Use **this** plugin when the human is in a chat / agent session with no browser WebAuthn context.
 
 ## Layout
 
