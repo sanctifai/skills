@@ -9,18 +9,39 @@ sanctifai/skills
 └── plugins/sanctifai-trust/     installable Chat-bridge plugin (this repo)
 ```
 
-> ⚠️ **`source/SKILL.md` and `trust/SKILL.md` are auto-generated — do not edit them by hand.** Each is mirrored from its source-of-truth repo by a GitHub Action on every production change. Hand edits there will be overwritten on the next sync.
+Keep folder names `source/` and `trust/` and filenames `SKILL.md` (uppercase). Cursor and plugin scanners require that layout — do not rename those files.
+
+> ⚠️ **`source/SKILL.md` and `trust/SKILL.md` are auto-mirrored — do not edit them by hand.**
 >
-> `plugins/sanctifai-trust/` is the public plugin package (not the auto-sync product skills). The Chat bridge **runtime** stays in private `sanctifai/sanctifai-trust` (`apps/chat-bridge`) at `https://bridge.trust.sanctifai.com`.
+> - **Source** is mirrored from `docs/skill.md` in the [app.sanctifai.com](https://app.sanctifai.com) repo by `mirror-skill.yml`.
+> - **Trust** is mirrored from `apps/web/public/agents/trust/skill.md` in [sanctifai-trust](https://trust.sanctifai.com) by `mirror-skill.yml`.
+>
+> Hand edits in those two files are overwritten on the next sync. Change the product-repo file instead.
+>
+> `plugins/sanctifai-trust/` is the public plugin package (not an auto-sync product skill). The Chat bridge **runtime** stays in private `sanctifai/sanctifai-trust` (`apps/chat-bridge`) at `https://bridge.trust.sanctifai.com`.
+
+## Canonical URLs (source of truth)
+
+Agents fetching HTTP should use the **web** URL. This GitHub repo is the copy marketplace crawlers scan. Do **not** hand-edit the mirrored files — change the SoT file in the product repo instead.
+
+| Product | Web (live SoT) | This repo | SoT file (writer) |
+|---------|----------------|-----------|--------------------|
+| **Source** | https://app.sanctifai.com/agents/source/skill.md | [`source/SKILL.md`](./source/SKILL.md) | `docs/skill.md` in app.sanctifai.com |
+| **Trust** (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | [`trust/SKILL.md`](./trust/SKILL.md) | `apps/web/public/agents/trust/skill.md` in sanctifai-trust |
+| **Trust** chat-bridge plugin | (bundled) | [`plugins/sanctifai-trust/skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md) | this repo (`plugins/sanctifai-trust/`) |
+
+Compatibility aliases still exist on the product hosts (`/agents/skill.md`, `/agent-skill.md`, `/skill.md`). Prefer `/agents/{product}/skill.md`.
+
+See [SYNC.md](./SYNC.md) for who writes what and on which push.
 
 ## Skills (auto-mirrored)
 
-| Skill | File | What it does | Source of truth |
-|-------|------|--------------|-----------------|
-| **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP | `docs/skill.md` in the [app.sanctifai.com](https://app.sanctifai.com/agents/skill.md) repo |
-| **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates | `apps/web/public/agent-skill.md` in the [trust.sanctifai.com](https://trust.sanctifai.com/skill.md) repo |
+| Skill | File | What it does |
+|-------|------|--------------|
+| **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP |
+| **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates |
 
-> Each product skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md).
+> Each product skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md) or the live Source URL above.
 
 ## Cursor plugin package
 
@@ -65,11 +86,13 @@ SanctifAI Source is a human-in-the-loop platform for AI agents. When your agent 
 }
 ```
 
-**Option 2: Inline skill** — download and add to your agent's context:
+**Option 2: Inline skill** — download and add to your agent's context (live SoT):
 
 ```bash
-curl -o SKILL.md https://raw.githubusercontent.com/sanctifai/skills/main/source/SKILL.md
+curl -o SKILL.md https://app.sanctifai.com/agents/source/skill.md
 ```
+
+Marketplace copy in this repo: [`source/SKILL.md`](./source/SKILL.md) ([raw](https://raw.githubusercontent.com/sanctifai/skills/main/source/SKILL.md)).
 
 **Option 3: Manual copy** — copy [`source/SKILL.md`](./source/SKILL.md) into your agent's system prompt or skill library.
 
@@ -82,7 +105,7 @@ curl -o SKILL.md https://raw.githubusercontent.com/sanctifai/skills/main/source/
 
 No server setup required. Agents self-register via the API.
 
-**Links:** [app.sanctifai.com](https://app.sanctifai.com) · [skill documentation](https://app.sanctifai.com/agents/skill) · API base `https://app.sanctifai.com/v1`
+**Links:** [app.sanctifai.com](https://app.sanctifai.com) · [skill documentation](https://app.sanctifai.com/agents/source/skill.md) · API base `https://app.sanctifai.com/v1`
 
 ---
 
@@ -97,15 +120,15 @@ SanctifAI Trust turns a unit of human work into a verifiable **Proof of Human** 
 
 ### Product skill (inline)
 
-Download and add to your agent's context:
+Download and add to your agent's context (live SoT):
 
 ```bash
-curl -o SKILL.md https://raw.githubusercontent.com/sanctifai/skills/main/trust/SKILL.md
+curl -o SKILL.md https://trust.sanctifai.com/agents/trust/skill.md
 ```
 
-Or copy [`trust/SKILL.md`](./trust/SKILL.md) into your agent's skill library. The same file is also served live at [trust.sanctifai.com/skill.md](https://trust.sanctifai.com/skill.md). Covers all three surfaces: Embedded, Chrome extension, and Chat bridge.
+Marketplace copy in this repo: [`trust/SKILL.md`](./trust/SKILL.md) ([raw](https://raw.githubusercontent.com/sanctifai/skills/main/trust/SKILL.md)). Covers all three surfaces: Embedded, Chrome extension, and Chat bridge.
 
-**Links:** [trust.sanctifai.com](https://trust.sanctifai.com) · API base `https://trust.sanctifai.com`
+**Links:** [trust.sanctifai.com](https://trust.sanctifai.com) · [skill documentation](https://trust.sanctifai.com/agents/trust/skill.md) · API base `https://trust.sanctifai.com`
 
 ### Chat bridge plugin
 

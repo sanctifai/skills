@@ -19,7 +19,7 @@ Always use the `approve_url` the API returns. Never invent `localhost` links.
 The agent never holds `TRUST_API_KEY` — the hosted bridge does. Self-host this
 plugin only if you need a custom allowlisted origin.
 
-Embedded and Extension: https://trust.sanctifai.com/agent-skill.md
+Embedded and Extension: https://trust.sanctifai.com/agents/trust/skill.md
 
 ## Flow
 
