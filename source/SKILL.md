@@ -1,4 +1,7 @@
 ---
+# Canonical public skill URL: https://app.sanctifai.com/agents/source/skill.md
+# Aliases (same markdown): /source-skill.md, /agents/skill.md, /skill.md
+# Human HTML page: /agents/skill
 name: sanctifai
 description: >-
   Human-in-the-loop skill for AI agents. Use when your agent needs humans to
@@ -8,6 +11,8 @@ description: >-
 ---
 
 # SanctifAI: Human-in-the-Loop for AI Agents
+
+<!-- Canonical public URL: https://app.sanctifai.com/agents/source/skill.md (aliases: /source-skill.md, /agents/skill.md, /skill.md; HTML: /agents/skill) -->
 
 > **Base URL:** `https://app.sanctifai.com/v1`
 
