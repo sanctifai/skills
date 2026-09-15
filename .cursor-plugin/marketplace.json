@@ -5,19 +5,19 @@
     "email": "support@sanctifai.com"
   },
   "metadata": {
-    "description": "Public SanctifAI agent plugins: Trust (participation seal) and Source (hire/ask a human via MCP + REST).",
+    "description": "SanctifAI Trust — Proof of Human, and SanctifAI Source — Hire a Human. Dual sibling plugins; not one mega-plugin.",
     "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "sanctifai-trust",
       "source": "./plugins/sanctifai-trust",
-      "description": "Trust participation seal for chat agents: a human showed up and sealed a payload (WebAuthn). Never who, never correct. Mint attestation → Chrome approve_url → poll certificate_url. Pair with sanctifai-source to hire/ask a human."
+      "description": "Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB."
     },
     {
       "name": "sanctifai-source",
       "source": "./plugins/sanctifai-source",
-      "description": "Hire or ask a human via MCP (https://app.sanctifai.com/mcp) and REST (https://app.sanctifai.com/v1). Self-serve/beta, no staffed SLA. Not identity. Pair with sanctifai-trust for a participation seal."
+      "description": "Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back."
     }
   ]
 }

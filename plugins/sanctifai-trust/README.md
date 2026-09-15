@@ -1,8 +1,11 @@
-# SanctifAI Trust
+# SanctifAI Trust — Proof of Human
 
-Installable **Cursor / Claude Code / Codex / Agent** plugin for **Chat bridge Proof of Human**.
+Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.
 
-**Honesty line:** Trust is a **participation seal** — a human showed up and sealed a payload. It is **never who** and **never correct**. To hire or ask a human via MCP/REST (self-serve/beta, no staffed SLA), install sibling **[sanctifai-source](../sanctifai-source)**.
+**Does:** participation seal · chat-bridge mint/poll · after-the-fact re-hash
+**Does not:** legal identity · “answer was correct” · staffed review desk
+
+Sibling plugin: **[SanctifAI Source — Hire a Human](../sanctifai-source)**. Dual sibling installs, not one mega-plugin.
 
 The agent cannot run WebAuthn in-card. This plugin teaches it to mint an attestation on the hosted Chat bridge, send the human an `approve_url` (Chrome + passkey), and poll until `certificate_url`.
 

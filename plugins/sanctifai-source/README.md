@@ -1,10 +1,13 @@
-# SanctifAI Source
+# SanctifAI Source — Hire a Human
 
-Installable **Cursor / Claude Code / Codex / Agent** plugin to **hire or ask a human** via SanctifAI Source.
+Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.
+
+**Does:** self-serve register · test tasks · Connect as the wire
+**Does not:** staffed enterprise hire-desk · SLA unless contracted
+
+Sibling plugin: **[SanctifAI Trust — Proof of Human](../sanctifai-trust)**. Dual sibling installs, not one mega-plugin.
 
 **What you can call:** MCP at `https://app.sanctifai.com/mcp` and REST at `https://app.sanctifai.com/v1`. Discovery tools work with no key; agent/task tools need `sk_live_…` from `POST /v1/agents/register`.
-
-**Honesty line:** Source is hire/ask a human. It is **self-serve/beta** and has **no staffed SLA**. It does **not** prove who the human is. For a participation seal (human showed up + sealed payload — never who / never correct), install sibling **[sanctifai-trust](../sanctifai-trust)**.
 
 **Homepage:** [https://app.sanctifai.com](https://app.sanctifai.com)
 **Live canonical skill (fetch this; do not invent endpoints):** [https://app.sanctifai.com/agents/source/skill.md](https://app.sanctifai.com/agents/source/skill.md)
@@ -75,8 +78,8 @@ See [`skills/source/SKILL.md`](./skills/source/SKILL.md) for the callable tools,
 
 | Plugin | Call | Means | Does not mean |
 |--------|------|-------|----------------|
-| **Source** (this package) | MCP `/mcp` + REST `/v1` | Hire/ask a human | Who they are; staffed SLA |
-| **Trust** | Chat bridge attestations | Participation seal (showed up + sealed payload) | Who; that the work is correct |
+| **SanctifAI Source — Hire a Human** (this package) | MCP `/mcp` + REST `/v1` | Ask registered marketplace workers; structured answers back | Staffed enterprise hire-desk; SLA unless contracted |
+| **SanctifAI Trust — Proof of Human** | Chat bridge attestations | Participation seal (WebAuthn + attested payload) | Legal identity; “answer was correct”; staffed review desk |
 
 ## License
 

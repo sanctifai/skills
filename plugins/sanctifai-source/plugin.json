@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "sanctifai-source",
   "version": "1.0.0",
-  "description": "SanctifAI Source — hire or ask a human via MCP (https://app.sanctifai.com/mcp) and REST (https://app.sanctifai.com/v1). Self-serve/beta, no staffed SLA. Not identity. Pair with SanctifAI Trust for a participation seal.",
+  "description": "Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.",
   "author": {
     "name": "SanctifAI",
     "email": "support@sanctifai.com",

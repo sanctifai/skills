@@ -1,6 +1,6 @@
 ---
 name: proof-of-human
-description: Use this when an agent needs a Trust participation seal — a human showed up and sealed a payload (WebAuthn + certificate_url). Never who, never correct. When WebAuthn cannot run in-card, mint via this Chat bridge (POST attestation → Chrome approve_url → poll certificate_url).
+description: Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. When WebAuthn cannot run in-card, mint via this Chat bridge (POST attestation → Chrome approve_url → poll certificate_url).
 homepage: https://trust.sanctifai.com
 version: 2.0.0
 updated: 2026-09-07

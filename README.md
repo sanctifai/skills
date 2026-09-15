@@ -2,7 +2,11 @@
 
 Public skill files **and** installable SanctifAI Trust + Source plugin packages. Product `SKILL.md` mirrors teach an AI agent how to integrate a SanctifAI platform. The Cursor/Claude/Codex plugins under `plugins/` are what you install in a harness.
 
-**Honesty line:** **Trust** = participation seal (human showed up + sealed payload) — never who / never correct. **Source** = hire/ask a human via MCP and REST — self-serve/beta, no staffed SLA.
+**SanctifAI Trust — Proof of Human:** Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.
+
+**SanctifAI Source — Hire a Human:** Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.
+
+Dual sibling plugins — not one mega-plugin.
 
 ```
 sanctifai/skills
@@ -42,8 +46,8 @@ See [SYNC.md](./SYNC.md) for who writes what and on which push.
 
 | Skill | File | What it does |
 |-------|------|--------------|
-| **SanctifAI Source** — hire/ask a human | [`source/SKILL.md`](./source/SKILL.md) | MCP (`https://app.sanctifai.com/mcp`) + REST (`https://app.sanctifai.com/v1`) to hire or ask a human. Self-serve/beta, no staffed SLA. Not identity. |
-| **SanctifAI Trust** — participation seal | [`trust/SKILL.md`](./trust/SKILL.md) | Human showed up + sealed payload (WebAuthn). Never who / never correct. Embedded + Extension + Chat bridge. |
+| **SanctifAI Source — Hire a Human** | [`source/SKILL.md`](./source/SKILL.md) | Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. |
+| **SanctifAI Trust — Proof of Human** | [`trust/SKILL.md`](./trust/SKILL.md) | Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. Embedded + Extension + Chat bridge. |
 
 > Each product skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md) or the live Source URL above.
 
@@ -51,8 +55,8 @@ See [SYNC.md](./SYNC.md) for who writes what and on which push.
 
 | Plugin | Path | What it does |
 |--------|------|--------------|
-| **sanctifai-trust** | [`plugins/sanctifai-trust`](./plugins/sanctifai-trust) | Chat-bridge **participation seal**: human showed up + sealed payload. Never who / never correct. Bundled skill: [`skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md). Default bridge: `https://bridge.trust.sanctifai.com`. |
-| **sanctifai-source** | [`plugins/sanctifai-source`](./plugins/sanctifai-source) | **Hire/ask a human** via MCP `https://app.sanctifai.com/mcp` and REST `https://app.sanctifai.com/v1`. Self-serve/beta, no staffed SLA. Bundled skill: [`skills/source/SKILL.md`](./plugins/sanctifai-source/skills/source/SKILL.md). Live SoT: [app.sanctifai.com/agents/source/skill.md](https://app.sanctifai.com/agents/source/skill.md). |
+| **sanctifai-trust** | [`plugins/sanctifai-trust`](./plugins/sanctifai-trust) | **SanctifAI Trust — Proof of Human.** Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. Bundled skill: [`skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md). Default bridge: `https://bridge.trust.sanctifai.com`. |
+| **sanctifai-source** | [`plugins/sanctifai-source`](./plugins/sanctifai-source) | **SanctifAI Source — Hire a Human.** Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. Bundled skill: [`skills/source/SKILL.md`](./plugins/sanctifai-source/skills/source/SKILL.md). Live SoT: [app.sanctifai.com/agents/source/skill.md](https://app.sanctifai.com/agents/source/skill.md). |
 
 This repo is a **multi-plugin marketplace** layout (`.cursor-plugin/marketplace.json`). Both Trust and Source are listed.
 
@@ -66,9 +70,14 @@ This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright
 
 ---
 
-## SanctifAI Source — Human-in-the-Loop
+## SanctifAI Source — Hire a Human
 
-SanctifAI Source lets an agent **hire or ask a human** (MCP + REST). Self-serve/beta, **no staffed SLA**. It is not identity verification. Pair with Trust when you need a participation seal instead of (or after) the human work.
+Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.
+
+**Does:** self-serve register · test tasks · Connect as the wire
+**Does not:** staffed enterprise hire-desk · SLA unless contracted
+
+Sibling: **SanctifAI Trust — Proof of Human** (participation seal). Dual sibling plugins, not one mega-plugin.
 
 When your agent needs a human decision, it creates a task. A real person receives the task, fills out a structured form, and the response comes back to your agent — either via long-polling or webhook.
 
@@ -118,7 +127,12 @@ No server setup required. Agents self-register via the API.
 
 ## SanctifAI Trust — Proof of Human
 
-SanctifAI Trust is a **participation seal**: a person confirms presence with WebAuthn (Touch ID / Windows Hello / passkey), and the platform records that a human showed up and sealed a payload (optional on-chain seal + public certificate URL + QR). **Never who. Never correct.** Raw task data never leaves the browser — only SHA-256 commitments are sent. Pair with Source when the agent needs to hire/ask a human, not just seal participation.
+Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.
+
+**Does:** participation seal · chat-bridge mint/poll · after-the-fact re-hash
+**Does not:** legal identity · “answer was correct” · staffed review desk
+
+A person confirms presence with WebAuthn (Touch ID / Windows Hello / passkey). Raw task data never leaves the browser — only SHA-256 commitments are sent. Sibling: **SanctifAI Source — Hire a Human**. Dual sibling plugins, not one mega-plugin.
 
 **Use cases:**
 - Prove a human approved a wire transfer, signed off a release, or reviewed content

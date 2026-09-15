@@ -1,30 +1,29 @@
 ---
 name: source
-description: Hire or ask a human via SanctifAI Source MCP (https://app.sanctifai.com/mcp) and REST (https://app.sanctifai.com/v1). Self-serve/beta, no staffed SLA. Not identity. Use when an agent needs a human to review, approve, complete, or advise. Canonical live skill: https://app.sanctifai.com/agents/source/skill.md
+description: Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. Canonical live skill: https://app.sanctifai.com/agents/source/skill.md
 homepage: https://app.sanctifai.com
 version: 1.0.0
 updated: 2026-09-15
 ---
 
-# SanctifAI Source — hire / ask a human
+# SanctifAI Source — Hire a Human
 
-Call **SanctifAI Source** when you need a human to do a unit of work (review, approve, complete, advise). You create a task with a form; a person fills it; you get structured `form_data` back.
+Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. You create a task with a form; a registered marketplace worker fills it; you get structured `form_data` back.
 
-**Honesty line**
+**Does:** self-serve register · test tasks · Connect as the wire
+**Does not:** staffed enterprise hire-desk · SLA unless contracted
 
-- Source = **hire or ask a human** via MCP and REST.
-- **Self-serve / beta. No staffed SLA.** Public tasks may sit unclaimed. Do not promise turnaround.
-- Source does **not** prove who the human is and does **not** prove the answer is correct.
-- Trust (sibling plugin `sanctifai-trust`) = **participation seal** (human showed up + sealed payload). Never who / never correct.
+Trust (sibling `sanctifai-trust`) owns the participation **seal**. Source owns the **hire path**. Dual sibling plugins, not one mega-plugin. Do not call Source workers “verified humans.”
 
 ```
-  Need a human to do work?          Need proof a human showed up?
+  Need a human to do work?          Need a participation seal?
             │                                    │
             ▼                                    ▼
      SANCTIFAI SOURCE                     SANCTIFAI TRUST
+     Hire a Human                         Proof of Human
      MCP + REST task                      Chat-bridge attestation
-     hire / ask / wait                    mint → Chrome → certificate_url
-     self-serve / no SLA                  participation seal only
+     marketplace workers                  mint → Chrome → certificate_url
+     no SLA unless contracted             not identity / not correctness
 ```
 
 ## Canonical URLs (do not invent hosts)
