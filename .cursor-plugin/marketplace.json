@@ -5,14 +5,19 @@
     "email": "support@sanctifai.com"
   },
   "metadata": {
-    "description": "Public SanctifAI agent plugins. Trust (Chat bridge Proof of Human) is listed now; a Source sibling may be added later.",
-    "version": "1.0.0"
+    "description": "Public SanctifAI agent plugins: Trust (participation seal) and Source (hire/ask a human via MCP + REST).",
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "sanctifai-trust",
       "source": "./plugins/sanctifai-trust",
-      "description": "Chat bridge Proof of Human for AI agents — mint an attestation, a human confirms in Chrome, poll for certificate_url."
+      "description": "Trust participation seal for chat agents: a human showed up and sealed a payload (WebAuthn). Never who, never correct. Mint attestation → Chrome approve_url → poll certificate_url. Pair with sanctifai-source to hire/ask a human."
+    },
+    {
+      "name": "sanctifai-source",
+      "source": "./plugins/sanctifai-source",
+      "description": "Hire or ask a human via MCP (https://app.sanctifai.com/mcp) and REST (https://app.sanctifai.com/v1). Self-serve/beta, no staffed SLA. Not identity. Pair with sanctifai-trust for a participation seal."
     }
   ]
 }

@@ -2,6 +2,8 @@
 
 Installable **Cursor / Claude Code / Codex / Agent** plugin for **Chat bridge Proof of Human**.
 
+**Honesty line:** Trust is a **participation seal** — a human showed up and sealed a payload. It is **never who** and **never correct**. To hire or ask a human via MCP/REST (self-serve/beta, no staffed SLA), install sibling **[sanctifai-source](../sanctifai-source)**.
+
 The agent cannot run WebAuthn in-card. This plugin teaches it to mint an attestation on the hosted Chat bridge, send the human an `approve_url` (Chrome + passkey), and poll until `certificate_url`.
 
 **Homepage:** [https://trust.sanctifai.com](https://trust.sanctifai.com)
@@ -29,7 +31,7 @@ plugins/sanctifai-trust/
 
 Point the harness at this plugin folder (`plugins/sanctifai-trust` in [sanctifai/skills](https://github.com/sanctifai/skills)), or add this repository as a Cursor marketplace (see `.cursor-plugin/marketplace.json` at the repo root).
 
-Cursor team marketplace: Dashboard → Plugins → import `https://github.com/sanctifai/skills`. Cursor reads `.cursor-plugin/marketplace.json` and lists `sanctifai-trust`.
+Cursor team marketplace: Dashboard → Plugins → import `https://github.com/sanctifai/skills`. Cursor reads `.cursor-plugin/marketplace.json` and lists **both** `sanctifai-trust` and `sanctifai-source`.
 
 Local Cursor test: copy this folder to `~/.cursor/plugins/local/sanctifai-trust`.
 

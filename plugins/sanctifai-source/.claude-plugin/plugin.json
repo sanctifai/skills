@@ -1,0 +1,21 @@
+{
+  "name": "sanctifai-source",
+  "version": "1.0.0",
+  "description": "SanctifAI Source — hire or ask a human via MCP (https://app.sanctifai.com/mcp) and REST (https://app.sanctifai.com/v1). Self-serve/beta, no staffed SLA. Not identity. Pair with SanctifAI Trust for a participation seal.",
+  "author": {
+    "name": "SanctifAI",
+    "email": "support@sanctifai.com",
+    "url": "https://sanctifai.com"
+  },
+  "homepage": "https://app.sanctifai.com",
+  "repository": "https://github.com/sanctifai/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "source",
+    "mcp",
+    "human-in-the-loop",
+    "hire-a-human",
+    "rest"
+  ],
+  "skills": "./skills"
+}

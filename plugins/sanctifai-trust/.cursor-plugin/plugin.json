@@ -2,7 +2,7 @@
   "name": "sanctifai-trust",
   "displayName": "SanctifAI Trust",
   "version": "1.0.0",
-  "description": "SanctifAI Trust Chat bridge — obtain cryptographic Proof of Human (WebAuthn attestation + certificate_url) when an agent cannot run WebAuthn in-card.",
+  "description": "SanctifAI Trust Chat-bridge participation seal: a human showed up and sealed a payload (WebAuthn). Never who, never correct. When the agent cannot run WebAuthn in-card: mint attestation → Chrome approve_url → poll certificate_url. Pair with sanctifai-source to hire/ask a human.",
   "author": {
     "name": "SanctifAI",
     "email": "support@sanctifai.com"
