@@ -84,7 +84,7 @@ When your agent needs a human decision, it creates a task. A real person receive
 **Use cases:**
 - Expense approvals: agent creates task → finance team approves or rejects
 - Content moderation: agent flags content → human reviews and decides
-- Data verification: agent extracts data → human confirms accuracy
+- Data verification: agent extracts data → human reviews and decides
 - Escalation handling: agent hits edge case → human provides guidance
 - Multi-step workflows: any step requiring human judgment
 
