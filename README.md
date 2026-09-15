@@ -1,12 +1,19 @@
 # SanctifAI — Agent Skills
 
-Public skill files **and** the installable SanctifAI Trust plugin package. Product `SKILL.md` mirrors teach an AI agent how to integrate a SanctifAI platform. The Cursor/Claude/Codex plugin under `plugins/` is what you install in a harness.
+Public skill files **and** installable SanctifAI Trust + Source plugin packages. Product `SKILL.md` mirrors teach an AI agent how to integrate a SanctifAI platform. The Cursor/Claude/Codex plugins under `plugins/` are what you install in a harness.
+
+**SanctifAI Trust — Proof of Human:** Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.
+
+**SanctifAI Source — Hire a Human:** Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.
+
+Dual sibling plugins — not one mega-plugin.
 
 ```
 sanctifai/skills
-├── source/SKILL.md              auto-mirrored product skill (Source HITL)
-├── trust/SKILL.md               auto-mirrored product skill (Trust: all 3 surfaces)
-└── plugins/sanctifai-trust/     installable Chat-bridge plugin (this repo)
+├── source/SKILL.md                auto-mirrored product skill (Source HITL)
+├── trust/SKILL.md                 auto-mirrored product skill (Trust: all 3 surfaces)
+├── plugins/sanctifai-trust/       installable Chat-bridge plugin (this repo)
+└── plugins/sanctifai-source/      installable Source MCP+REST plugin (this repo)
 ```
 
 Keep folder names `source/` and `trust/` and filenames `SKILL.md` (uppercase). Cursor and plugin scanners require that layout — do not rename those files.
@@ -18,7 +25,7 @@ Keep folder names `source/` and `trust/` and filenames `SKILL.md` (uppercase). C
 >
 > Hand edits in those two files are overwritten on the next sync. Change the product-repo file instead.
 >
-> `plugins/sanctifai-trust/` is the public plugin package (not an auto-sync product skill). The Chat bridge **runtime** stays in private `sanctifai/sanctifai-trust` (`apps/chat-bridge`) at `https://bridge.trust.sanctifai.com`.
+> `plugins/sanctifai-trust/` and `plugins/sanctifai-source/` are public plugin packages (not auto-sync product skills). The Chat bridge **runtime** stays in private `sanctifai/sanctifai-trust` (`apps/chat-bridge`) at `https://bridge.trust.sanctifai.com`. The Source **runtime** stays at `https://app.sanctifai.com`.
 
 ## Canonical URLs (source of truth)
 
@@ -29,6 +36,7 @@ Agents fetching HTTP should use the **web** URL. This GitHub repo is the copy ma
 | **Source** | https://app.sanctifai.com/agents/source/skill.md | [`source/SKILL.md`](./source/SKILL.md) | `docs/skill.md` in app.sanctifai.com |
 | **Trust** (full website skill) | https://trust.sanctifai.com/agents/trust/skill.md | [`trust/SKILL.md`](./trust/SKILL.md) | `apps/web/public/agents/trust/skill.md` in sanctifai-trust |
 | **Trust** chat-bridge plugin | (bundled) | [`plugins/sanctifai-trust/skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md) | this repo (`plugins/sanctifai-trust/`) |
+| **Source** plugin | https://app.sanctifai.com/agents/source/skill.md (live SoT) | [`plugins/sanctifai-source/skills/source/SKILL.md`](./plugins/sanctifai-source/skills/source/SKILL.md) | this repo (`plugins/sanctifai-source/`) — packaging wrapper; fetch the live URL for full API |
 
 Compatibility aliases still exist on the product hosts (`/agents/skill.md`, `/agent-skill.md`, `/skill.md`). Prefer `/agents/{product}/skill.md`.
 
@@ -38,32 +46,40 @@ See [SYNC.md](./SYNC.md) for who writes what and on which push.
 
 | Skill | File | What it does |
 |-------|------|--------------|
-| **SanctifAI Source** — Human-in-the-Loop | [`source/SKILL.md`](./source/SKILL.md) | Let your agent ask humans for help — approvals, reviews, decisions, completions — via REST API or MCP |
-| **SanctifAI Trust** — Proof of Human | [`trust/SKILL.md`](./trust/SKILL.md) | Get cryptographic Proof-of-Human attestations: WebAuthn presence checks, participation records, on-chain seals, public certificates |
+| **SanctifAI Source — Hire a Human** | [`source/SKILL.md`](./source/SKILL.md) | Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. |
+| **SanctifAI Trust — Proof of Human** | [`trust/SKILL.md`](./trust/SKILL.md) | Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. Embedded + Extension + Chat bridge. |
 
 > Each product skill lives only in its subfolder. The former root `SKILL.md` (the Source skill's original path) was retired on 2026-07-08 — if you fetched that URL, switch to [`source/SKILL.md`](./source/SKILL.md) or the live Source URL above.
 
-## Cursor plugin package
+## Cursor plugin packages
 
 | Plugin | Path | What it does |
 |--------|------|--------------|
-| **sanctifai-trust** | [`plugins/sanctifai-trust`](./plugins/sanctifai-trust) | Installable Cursor / Claude Code / Codex / Agent plugin for **Chat bridge** Proof of Human. Bundled skill: [`skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md). Default bridge: `https://bridge.trust.sanctifai.com`. |
+| **sanctifai-trust** | [`plugins/sanctifai-trust`](./plugins/sanctifai-trust) | **SanctifAI Trust — Proof of Human.** Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. Bundled skill: [`skills/proof-of-human/SKILL.md`](./plugins/sanctifai-trust/skills/proof-of-human/SKILL.md). Default bridge: `https://bridge.trust.sanctifai.com`. |
+| **sanctifai-source** | [`plugins/sanctifai-source`](./plugins/sanctifai-source) | **SanctifAI Source — Hire a Human.** Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back. Bundled skill: [`skills/source/SKILL.md`](./plugins/sanctifai-source/skills/source/SKILL.md). Live SoT: [app.sanctifai.com/agents/source/skill.md](https://app.sanctifai.com/agents/source/skill.md). |
 
-This repo is a **multi-plugin marketplace** layout (`.cursor-plugin/marketplace.json`). Only Trust is listed today. A **Source** sibling plugin may be added later in `plugins/` and registered in the same marketplace file — do not add a placeholder entry until that package exists.
+This repo is a **multi-plugin marketplace** layout (`.cursor-plugin/marketplace.json`). Both Trust and Source are listed.
 
-Cursor reads `.cursor-plugin/marketplace.json` (not a root `marketplace.json`). Plugin identity lives in `plugins/sanctifai-trust/.cursor-plugin/plugin.json` plus the portable `plugin.json` / `.claude-plugin/` / `.codex-plugin/` manifests.
+Cursor reads `.cursor-plugin/marketplace.json` (not a root `marketplace.json`). Plugin identity lives in each package's `.cursor-plugin/plugin.json` plus the portable `plugin.json` / `.claude-plugin/` / `.codex-plugin/` manifests. Source also ships `mcp.json` (Streamable HTTP → `https://app.sanctifai.com/mcp`).
 
-This repository is **not** submitted to the public [Cursor Marketplace](https://cursor.com/marketplace). Do not publish it there.
+This repository is **not** submitted to the public [Cursor Marketplace](https://cursor.com/marketplace) by default. Sammy owns submit/QA — do not publish from a packaging PR.
 
 ## License
 
-This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright 2026 SanctifAI). See [NOTICE](./NOTICE) for trademarks, patent reservation (including App. 63/926,453), and license **scope**: Apache-2.0 covers this skills/plugin packaging repo only. It does **not** grant trademark rights, it does **not** grant patents beyond Apache-2.0 §3, and it does **not** license the Trust SaaS/service or proprietary product/runtime code (the Chat bridge runtime stays private).
+This repository is licensed under the [Apache License 2.0](./LICENSE) (copyright 2026 SanctifAI). See [NOTICE](./NOTICE) for trademarks, patent reservation (including App. 63/926,453), and license **scope**: Apache-2.0 covers this skills/plugin packaging repo only. It does **not** grant trademark rights, it does **not** grant patents beyond Apache-2.0 §3, and it does **not** license the Trust or Source SaaS/services or proprietary product/runtime code (the Chat bridge runtime stays private).
 
 ---
 
-## SanctifAI Source — Human-in-the-Loop
+## SanctifAI Source — Hire a Human
 
-SanctifAI Source is a human-in-the-loop platform for AI agents. When your agent needs a human decision, it creates a task. A real person receives the task, fills out a structured form, and the response comes back to your agent — either via long-polling or webhook.
+Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.
+
+**Does:** self-serve register · test tasks · Connect as the wire
+**Does not:** staffed enterprise hire-desk · SLA unless contracted
+
+Sibling: **SanctifAI Trust — Proof of Human** (participation seal). Dual sibling plugins, not one mega-plugin.
+
+When your agent needs a human decision, it creates a task. A real person receives the task, fills out a structured form, and the response comes back to your agent — either via long-polling or webhook.
 
 **Use cases:**
 - Expense approvals: agent creates task → finance team approves or rejects
@@ -111,7 +127,12 @@ No server setup required. Agents self-register via the API.
 
 ## SanctifAI Trust — Proof of Human
 
-SanctifAI Trust turns a unit of human work into a verifiable **Proof of Human** attestation: a person confirms presence with WebAuthn (Touch ID / Windows Hello / passkey), and the platform records a privacy-preserving participation plus an optional on-chain seal and a public certificate URL + QR code. Raw task data never leaves the browser — only SHA-256 commitments are sent.
+Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.
+
+**Does:** participation seal · chat-bridge mint/poll · after-the-fact re-hash
+**Does not:** legal identity · “answer was correct” · staffed review desk
+
+A person confirms presence with WebAuthn (Touch ID / Windows Hello / passkey). Raw task data never leaves the browser — only SHA-256 commitments are sent. Sibling: **SanctifAI Source — Hire a Human**. Dual sibling plugins, not one mega-plugin.
 
 **Use cases:**
 - Prove a human approved a wire transfer, signed off a release, or reviewed content

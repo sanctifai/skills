@@ -2,11 +2,12 @@ Copyright 2026 SanctifAI
 
 This skills/plugin packaging repository (skill docs, manifests, and plugin
 packaging) is licensed under the Apache License 2.0 (see LICENSE).
-"SanctifAI," "Trust," and related marks are not licensed by Apache-2.0 and
+"SanctifAI," "Trust," "SanctifAI Source," and related marks are not licensed by Apache-2.0 and
 remain trademarks of SanctifAI and/or the applicable rights holders.
 Except for the narrow patent grant in Apache License 2.0 §3
 (contribution-scoped), no patent license is granted. Patents covering the
 SanctifAI Trust platform, including provisional application App. 63/926,453,
 are reserved. The Trust SaaS/service and proprietary product/runtime source
 code are not licensed by this repository (the Chat bridge runtime stays
-private).
+private). The Source SaaS/service (app.sanctifai.com MCP/REST) is likewise
+not licensed by this packaging repository.

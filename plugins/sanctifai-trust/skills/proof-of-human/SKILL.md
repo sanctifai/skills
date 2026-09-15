@@ -1,6 +1,6 @@
 ---
 name: proof-of-human
-description: Use this whenever an agent must prove a qualified human participated — bind points, approvals, regulated actions, or sending work outside the session. Obtains cryptographic Proof of Human (WebAuthn-backed attestation + portable certificate_url) on demand. When WebAuthn cannot run in-card, mint via this Chat bridge (POST attestation → human opens Chrome approve_url → poll until certificate_url).
+description: Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB. When WebAuthn cannot run in-card, mint via this Chat bridge (POST attestation → Chrome approve_url → poll certificate_url).
 homepage: https://trust.sanctifai.com
 version: 2.0.0
 updated: 2026-09-07

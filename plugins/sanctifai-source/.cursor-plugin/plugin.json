@@ -1,0 +1,30 @@
+{
+  "name": "sanctifai-source",
+  "displayName": "SanctifAI Source — Hire a Human",
+  "version": "1.0.0",
+  "description": "Ask registered marketplace workers (verify, escalate, consult, simulate) via MCP/REST and get structured answers back.",
+  "author": {
+    "name": "SanctifAI",
+    "email": "support@sanctifai.com"
+  },
+  "publisher": "SanctifAI",
+  "homepage": "https://app.sanctifai.com",
+  "repository": "https://github.com/sanctifai/skills",
+  "license": "Apache-2.0",
+  "logo": "assets/logo.svg",
+  "keywords": [
+    "source",
+    "mcp",
+    "human-in-the-loop",
+    "hire-a-human",
+    "rest"
+  ],
+  "category": "developer-tools",
+  "tags": [
+    "mcp",
+    "human-in-the-loop",
+    "source"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./mcp.json"
+}

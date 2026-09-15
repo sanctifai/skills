@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "sanctifai-trust",
   "version": "1.0.0",
-  "description": "SanctifAI Trust Chat bridge — obtain cryptographic Proof of Human (WebAuthn attestation + certificate_url) when an agent cannot run WebAuthn in-card.",
+  "description": "Seal that a WebAuthn-authed human participated and attested an exact payload. Outsiders can verify the receipt without trusting your DB.",
   "author": {
     "name": "SanctifAI",
     "email": "support@sanctifai.com",
